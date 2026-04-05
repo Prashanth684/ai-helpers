@@ -1,0 +1,22 @@
+{
+  "name": "agentic-docs-maintainer",
+  "description": "Autonomous maintenance and knowledge extraction for AI-friendly documentation (single-tier and two-tier)",
+  "version": "2.3.0",
+  "author": {
+    "name": "github.com/openshift-eng"
+  },
+  "keywords": [
+    "documentation",
+    "maintenance",
+    "knowledge-extraction",
+    "autonomous",
+    "ralph-loop",
+    "two-tier",
+    "tier1-ecosystem",
+    "tier2-lean"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/openshift/tmp/ai-helpers"
+  }
+}

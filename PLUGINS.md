@@ -3,6 +3,7 @@
 This document lists all available Claude Code plugins and their commands in the ai-helpers repository.
 
 - [Agendas](#agendas-plugin)
+- [Agentic Docs Maintainer](#agentic-docs-maintainer-plugin)
 - [Bigquery](#bigquery-plugin)
 - [Ci](#ci-plugin)
 - [Code Review](#code-review-plugin)
@@ -43,6 +44,19 @@ A plugin to create various meeting agendas
 - **`/agendas:outcome-refinement`** - Analyze the list of JIRA outcome issues to prepare an outcome refinement meeting agenda.
 
 See [plugins/agendas/README.md](plugins/agendas/README.md) for detailed documentation.
+
+### Agentic Docs Maintainer Plugin
+
+Autonomous maintenance and knowledge extraction for AI-friendly documentation (single-tier and two-tier)
+
+**Commands:**
+- **`/agentic-docs-maintainer:extract`** - Extract knowledge from enhancements and create documentation automatically
+- **`/agentic-docs-maintainer:fix`** - Automatically fix compliance issues in agentic documentation
+- **`/agentic-docs-maintainer:tier1-ecosystem`** - Create Tier 1 agentic documentation (ecosystem hub) in openshift/enhancements
+- **`/agentic-docs-maintainer:tier2-lean`** - Create lean Tier 2 agentic documentation for OpenShift component repositories
+- **`/agentic-docs-maintainer:verify`** - Verify agentic documentation compliance against SPECIFICATION.md
+
+See [plugins/agentic-docs-maintainer/README.md](plugins/agentic-docs-maintainer/README.md) for detailed documentation.
 
 ### Bigquery Plugin
 
