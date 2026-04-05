@@ -985,6 +985,62 @@
     {
       "commands": [
         {
+          "argument_hint": "",
+          "description": "Extract knowledge from enhancements and create documentation automatically",
+          "name": "extract",
+          "synopsis": "/agentic-docs-maintainer:extract [--path <repo-path>]"
+        },
+        {
+          "argument_hint": "",
+          "description": "Automatically fix compliance issues in agentic documentation",
+          "name": "fix",
+          "synopsis": "/agentic-docs-maintainer [--path <repo-path>]"
+        },
+        {
+          "argument_hint": "",
+          "description": "Create Tier 1 agentic documentation (ecosystem hub) in openshift/enhancements",
+          "name": "tier1-ecosystem",
+          "synopsis": "/agentic-docs-maintainer:tier1-ecosystem [--path <enhancements-path>] [--verify]"
+        },
+        {
+          "argument_hint": "",
+          "description": "Create lean Tier 2 agentic documentation for OpenShift component repositories",
+          "name": "tier2-component",
+          "synopsis": "/agentic-docs-maintainer:tier2-component [--path <repo-path>] [--verify] [--extract]"
+        },
+        {
+          "argument_hint": "",
+          "description": "Verify agentic documentation compliance against SPECIFICATION.md",
+          "name": "verify",
+          "synopsis": "/agentic-docs-maintainer:verify [--path <repo-path>]"
+        }
+      ],
+      "description": "Autonomous maintenance and knowledge extraction for AI-friendly documentation",
+      "has_readme": true,
+      "hooks": [],
+      "name": "agentic-docs-maintainer",
+      "skills": [
+        {
+          "description": "Create Tier 1 agentic documentation (ecosystem hub) in openshift/enhancements",
+          "id": "agentic-docs-creator",
+          "name": "agentic-docs-creator"
+        },
+        {
+          "description": "Autonomous maintenance - fixes issues AND extracts knowledge from enhancements",
+          "id": "agentic-docs-maintainer",
+          "name": "agentic-docs-maintainer"
+        },
+        {
+          "description": "Create and maintain lean Tier 2 agentic documentation for component repos (references Tier 1)",
+          "id": "agentic-docs-tier2",
+          "name": "agentic-docs-tier2"
+        }
+      ],
+      "version": "2.3.0"
+    },
+    {
+      "commands": [
+        {
           "argument_hint": "[area] <name> <description> <jira>",
           "description": "Create a new OpenShift Enhancement Proposal",
           "name": "add-enhancement",
