@@ -46,17 +46,129 @@ mkdir -p "$AGENTIC_DIR"/{domain,architecture,decisions,exec-plans,references,scr
 # Create exec-plans subdirectories
 mkdir -p "$AGENTIC_DIR/exec-plans"/{active,completed}
 
+# Create exec-plan template
+cat > "$AGENTIC_DIR/exec-plans/template.md" <<'EOF'
+---
+status: active
+enhancement: <link to enhancements repo>
+owner: @username
+target_version: vX.Y
+started: YYYY-MM-DD
+---
+
+# Plan: [Feature Name]
+
+## Goal
+[What we're building - component-specific scope]
+
+## Context
+See [enhancement](link) for overall design.
+This plan covers ONLY [COMPONENT]-specific implementation.
+
+## Related Components
+[Other repos involved, if cross-repo feature]
+
+## Implementation Status
+- [ ] Design review
+- [ ] API changes
+- [ ] Controller implementation
+- [ ] Unit tests
+- [ ] Integration tests
+- [ ] E2E tests
+- [ ] Documentation
+- [ ] Performance validation
+
+## Blockers
+[Any blockers or dependencies]
+
+## Component-Specific Considerations
+[What's unique about implementing this in THIS component]
+
+## Testing Strategy
+[Component-specific testing approach]
+
+## Rollout Plan
+[How this will be deployed/enabled]
+
+## Links
+- Enhancement: [link]
+- Jira: [link]
+- Related ADRs: [link]
+EOF
+
+# Create README for exec-plans
+cat > "$AGENTIC_DIR/exec-plans/README.md" <<'EOF'
+# Execution Plans
+
+Track active feature implementations and completed work.
+
+## Usage
+
+**Starting a new feature:**
+```bash
+cp template.md active/feature-name.md
+# Fill in the template with your feature details
+```
+
+**When implementation completes:**
+```bash
+mv active/feature-name.md completed/
+```
+
+## Structure
+
+- `active/` - Features currently being implemented
+- `completed/` - Archived completed features
+- `template.md` - Template for new exec-plans
+
+## What to Track
+
+Create an exec-plan when:
+- Implementing a new feature from an enhancement
+- Major refactoring or architectural change
+- Cross-repo feature (your component's portion)
+- Any multi-week engineering effort
+
+## What NOT to Track
+
+Don't create exec-plans for:
+- Bug fixes (unless major architectural fix)
+- Minor refactoring
+- Documentation-only changes
+- Routine maintenance
+
+Link exec-plans from AGENTS.md so they're discoverable.
+EOF
+
 echo "✅ Lean Tier 2 structure created"
+echo "✅ Created exec-plans/template.md"
+echo "✅ Created exec-plans/README.md"
 echo ""
 echo "Structure:"
 tree -L 2 "$AGENTIC_DIR" 2>/dev/null || find "$AGENTIC_DIR" -type d | sed 's|^|  |'
 echo ""
+
+# Initialize progress tracking
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -f "$SCRIPT_DIR/check-phase-progress.sh" ]; then
+    bash "$SCRIPT_DIR/check-phase-progress.sh" "$REPO_PATH" "" init
+    bash "$SCRIPT_DIR/check-phase-progress.sh" "$REPO_PATH" "phase_2_structure" mark-complete
+    echo ""
+fi
+
 echo "Next steps:"
-echo "  1. Run populate-templates.sh to create template files"
-echo "  2. Customize templates with component-specific content"
-echo "  3. Run validate.sh to verify Tier 2 compliance"
+echo "  1. Create component-specific content (via AI or manual):"
+echo "     - AGENTS.md (≤100 lines, link to Tier 1, show exec-plans/ structure)"
+echo "     - references/ecosystem.md (link to Tier 1 patterns)"
+echo "     - domain/ (component-specific CRDs/concepts) - Phase 2.5 ⭐"
+echo "     - architecture/ (component internals)"
+echo "     - decisions/ (component-specific ADRs) - Phase 5.2 ⭐"
+echo "     - exec-plans/active/ (for planning new features)"
+echo "  2. Run validate-categories.sh --strict for enforcement"
+echo "  3. Run validate.sh for full compliance check"
 echo ""
-echo "IMPORTANT: This is LEAN Tier 2 structure"
-echo "  - No generic patterns (link to Tier 1 instead)"
-echo "  - AGENTS.md must be ≤80 lines (not 150)"
-echo "  - ecosystem.md must link to Tier 1"
+echo "CRITICAL: Don't skip Phase 2.5 (domain discovery) and Phase 5.2 (ADR extraction)"
+echo "  - Phase 2.5: ≥4 domain concepts required (SKILL.md lines 455-672)"
+echo "  - Phase 5.2: ≥3 ADRs required (SKILL.md lines 955-1236)"
+echo ""
+echo "Track progress: bash scripts/check-phase-progress.sh $REPO_PATH list"

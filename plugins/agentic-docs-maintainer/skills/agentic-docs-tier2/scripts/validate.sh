@@ -1,6 +1,16 @@
 #!/bin/bash
-# Validate Tier 2 lean documentation compliance
+# Validate Tier 2 lean documentation compliance - COMPREHENSIVE
 # Exit 0 if compliant, 1 if issues, 2 if contains Tier 1 content
+#
+# NOTE: Two validation approaches available:
+# - validate.sh (this script): Comprehensive strict validation
+#   Used by: Commands (/agentic-docs-maintainer:tier2-lean --verify)
+#   Purpose: Full compliance check with all rules
+#
+# - validate-categories.sh: Flexible category-based validation
+#   Used by: Skills during generation (SKILL.md Phase 7)
+#   Purpose: Check categories have content, warn on suggestions
+#   Advantage: Adapts to different file naming conventions
 
 set -e
 
@@ -28,24 +38,65 @@ record_warning() {
     WARNINGS+=("$1")
 }
 
-# 1. Check AGENTS.md exists and ≤80 lines (NOT 150 like Tier 1)
-echo "📋 [1/10] Checking AGENTS.md size..."
+# 1. Check AGENTS.md exists and ≤100 lines (Tier 2 lean, not 150 like Tier 1)
+echo "📋 [1/11] Checking AGENTS.md size..."
 if [ ! -f "$AGENTS_FILE" ]; then
     record_issue "Missing AGENTS.md at repository root"
     echo "  ❌ Missing AGENTS.md"
 else
     LINES=$(wc -l < "$AGENTS_FILE")
-    if [ "$LINES" -gt 80 ]; then
-        record_issue "AGENTS.md is $LINES lines (must be ≤80 for Tier 2 lean)"
-        echo "  ❌ AGENTS.md is $LINES lines (must be ≤80 for Tier 2, not 150 like Tier 1)"
+    if [ "$LINES" -gt 100 ]; then
+        record_issue "AGENTS.md is $LINES lines (must be ≤100 for Tier 2 lean)"
+        echo "  ❌ AGENTS.md is $LINES lines (must be ≤100 for Tier 2, not 150 like Tier 1)"
     else
-        echo "  ✅ AGENTS.md exists ($LINES lines ≤80)"
+        echo "  ✅ AGENTS.md exists ($LINES lines ≤100)"
     fi
 fi
 echo ""
 
-# 2. Check ecosystem.md exists (critical link to Tier 1)
-echo "📋 [2/10] Checking ecosystem.md..."
+# 1.5. Check AGENTS.md contains knowledge graph (REQUIRED for Tier 2)
+echo "📋 [2/11] Checking AGENTS.md knowledge graph..."
+if [ -f "$AGENTS_FILE" ]; then
+    # Check for knowledge graph section
+    if ! grep -qi "knowledge graph" "$AGENTS_FILE"; then
+        record_issue "AGENTS.md missing knowledge graph section (REQUIRED for Tier 2)"
+        echo "  ❌ No knowledge graph section found"
+        echo "     Required: ASCII diagram showing documentation relationships"
+        echo "     Template: SKILL.md lines 962-1040"
+    else
+        # Check for ASCII diagram (box drawing characters or simple ASCII art)
+        if grep -qE "┌|┐|└|┘|│|─|▼|→|\+---|\|" "$AGENTS_FILE"; then
+            echo "  ✅ Knowledge graph with ASCII diagram found"
+        else
+            record_issue "AGENTS.md has 'Knowledge Graph' heading but missing ASCII diagram"
+            echo "  ❌ Knowledge graph section exists but missing ASCII diagram"
+            echo "     Required: Visual diagram showing doc structure and relationships"
+            echo "     Template: SKILL.md lines 962-1040"
+        fi
+    fi
+else
+    echo "  ⏭️  Skipped (AGENTS.md doesn't exist)"
+fi
+echo ""
+
+# 1.6. Check AGENTS.md mentions exec-plans/ (REQUIRED for Tier 2)
+echo "📋 [2.5/11] Checking AGENTS.md mentions exec-plans..."
+if [ -f "$AGENTS_FILE" ]; then
+    if ! grep -qi "exec-plan" "$AGENTS_FILE"; then
+        record_issue "AGENTS.md doesn't mention exec-plans/ (required for feature planning guidance)"
+        echo "  ❌ No exec-plans/ mentioned in AGENTS.md"
+        echo "     Required: Show exec-plans/ in directory structure or workflow"
+        echo "     Template: SKILL.md lines 1018-1033"
+    else
+        echo "  ✅ AGENTS.md mentions exec-plans/"
+    fi
+else
+    echo "  ⏭️  Skipped (AGENTS.md doesn't exist)"
+fi
+echo ""
+
+# 3. Check ecosystem.md exists (critical link to Tier 1)
+echo "📋 [3/11] Checking ecosystem.md..."
 if [ ! -f "$AGENTIC_DIR/references/ecosystem.md" ]; then
     record_issue "Missing agentic/references/ecosystem.md (required link to Tier 1)"
     echo "  ❌ Missing ecosystem.md - critical for Tier 2"
@@ -68,7 +119,7 @@ fi
 echo ""
 
 # 3. Check for generic content duplication (CRITICAL for Tier 2)
-echo "📋 [3/10] Checking for generic content duplication..."
+echo "📋 [4/11] Checking for generic content duplication..."
 FORBIDDEN_GENERIC=(
     "testing pyramid"
     "controller-runtime reconciliation loop"
@@ -81,25 +132,41 @@ FORBIDDEN_GENERIC=(
 
 SERIOUS_VIOLATIONS=0
 for pattern in "${FORBIDDEN_GENERIC[@]}"; do
-    # Exception: "Examples" sections are OK
-    if grep -ri "$pattern" "$AGENTIC_DIR" 2>/dev/null | grep -v "Example" | grep -v "\.git"; then
-        record_issue "Found generic content that belongs in Tier 1: '$pattern'"
-        echo "  ❌ Generic content detected: '$pattern'"
-        echo "     Should link to Tier 1 instead of duplicating"
-        SERIOUS_VIOLATIONS=$((SERIOUS_VIOLATIONS + 1))
+    # Search for pattern, but exclude legitimate references to Tier 1
+    matches=$(grep -rin "$pattern" "$AGENTIC_DIR" 2>/dev/null | \
+        grep -v "\.git" | \
+        grep -v "Example:" | \
+        grep -v "github.com/openshift/enhancements" | \
+        grep -v "^[^:]*ecosystem.md:" | \
+        grep -v "^[^:]*> \*\*" | \
+        grep -v "See.*Tier 1" | \
+        grep -v "link to Tier 1" || true)
+
+    if [ -n "$matches" ]; then
+        # Check if it's actual content duplication (multi-line explanation)
+        # vs just a brief mention/reference
+        match_count=$(echo "$matches" | wc -l)
+
+        # If pattern appears multiple times or with substantial text, likely duplication
+        if [ "$match_count" -gt 2 ]; then
+            record_issue "Found generic content that belongs in Tier 1: '$pattern' ($match_count occurrences)"
+            echo "  ❌ Generic content detected: '$pattern' ($match_count times)"
+            echo "     Should link to Tier 1 instead of duplicating"
+            SERIOUS_VIOLATIONS=$((SERIOUS_VIOLATIONS + 1))
+        fi
     fi
 done
 
 if [ "$SERIOUS_VIOLATIONS" -gt 0 ]; then
     echo "  ❌ Found $SERIOUS_VIOLATIONS generic content violation(s)"
     EXIT_CODE=2  # Serious violation
-elif [ ${#ISSUES[@]} -eq 0 ]; then
+else
     echo "  ✅ No generic content duplication detected"
 fi
 echo ""
 
 # 4. Check domain concepts are component-specific
-echo "📋 [4/10] Checking domain concepts are component-specific..."
+echo "📋 [5/11] Checking domain concepts are component-specific..."
 if [ -d "$AGENTIC_DIR/domain" ]; then
     # Tier 1 concepts that shouldn't be in Tier 2 (top-level)
     TIER1_CONCEPTS=(
@@ -129,7 +196,7 @@ fi
 echo ""
 
 # 5. Check ADRs are component-specific
-echo "📋 [5/10] Checking ADRs are component-specific..."
+echo "📋 [6/11] Checking ADRs are component-specific..."
 if [ -d "$AGENTIC_DIR/decisions" ]; then
     # Cross-repo decisions that belong in Tier 1
     TIER1_DECISIONS=(
@@ -146,6 +213,15 @@ if [ -d "$AGENTIC_DIR/decisions" ]; then
         fi
     done
 
+    # Check if decisions/ has content
+    ADR_COUNT=$(find "$AGENTIC_DIR/decisions" -name "adr-*.md" 2>/dev/null | wc -l)
+    if [ "$ADR_COUNT" -eq 0 ]; then
+        record_warning "decisions/ directory is empty - extract component-specific ADRs from design docs (see Phase 5.2)"
+        echo "  ⚠️  No ADRs found - consider extracting from /docs/ design documents"
+    else
+        echo "  ✅ Found $ADR_COUNT component ADR(s)"
+    fi
+
     if [ ${#ISSUES[@]} -eq 0 ]; then
         echo "  ✅ ADRs appear component-specific"
     fi
@@ -155,7 +231,7 @@ fi
 echo ""
 
 # 6. Check AGENTS.md links to Tier 1
-echo "📋 [6/10] Checking AGENTS.md links to Tier 1..."
+echo "📋 [7/11] Checking AGENTS.md links to Tier 1..."
 if [ -f "$AGENTS_FILE" ]; then
     if ! grep -q "github.com/openshift/enhancements.*agentic" "$AGENTS_FILE"; then
         record_issue "AGENTS.md doesn't prominently link to Tier 1"
@@ -167,7 +243,7 @@ fi
 echo ""
 
 # 7. Check internal links
-echo "📋 [7/10] Checking internal links..."
+echo "📋 [8/11] Checking internal links..."
 if [ -d "$AGENTIC_DIR" ]; then
     cd "$AGENTIC_DIR"
 
@@ -190,7 +266,7 @@ fi
 echo ""
 
 # 8. Check required Tier 2 structure
-echo "📋 [8/10] Checking required Tier 2 directories..."
+echo "📋 [9/11] Checking required Tier 2 directories..."
 REQUIRED_TIER2_DIRS=(
     "domain"
     "architecture"
@@ -207,36 +283,55 @@ for dir in "${REQUIRED_TIER2_DIRS[@]}"; do
     fi
 done
 
+# Check for exec-plans template
+if [ ! -f "$AGENTIC_DIR/exec-plans/template.md" ]; then
+    record_warning "Missing exec-plans/template.md (recommended for feature planning)"
+    echo "  ⚠️  No exec-plans/template.md - should exist for teams to copy"
+else
+    echo "  ✅ exec-plans/template.md exists"
+fi
+
 if [ ${#ISSUES[@]} -eq 0 ]; then
     echo "  ✅ All required directories present"
 fi
 echo ""
 
 # 9. Check component-specific guide files
-echo "📋 [9/10] Checking component-specific guides..."
+echo "📋 [10/11] Checking component-specific guides..."
 COMPONENT_UPPER=$(echo "$COMPONENT_NAME" | tr '[:lower:]' '[:upper:]' | tr '-' '_')
 
 # Look for component-specific DEVELOPMENT.md and TESTING.md
+# Accept various naming patterns:
+# - machine-config-operator_DEVELOPMENT.md
+# - MACHINE_CONFIG_OPERATOR_DEVELOPMENT.md
+# - MCO_DEVELOPMENT.md (common abbreviation)
 DEV_GUIDE="${COMPONENT_UPPER}_DEVELOPMENT.md"
 TEST_GUIDE="${COMPONENT_UPPER}_TESTING.md"
 
-if [ -f "$AGENTIC_DIR/${COMPONENT_NAME}_DEVELOPMENT.md" ] || [ -f "$AGENTIC_DIR/$DEV_GUIDE" ]; then
+# Extract common abbreviation (e.g., MCO from machine-config-operator)
+ABBREV=$(echo "$COMPONENT_NAME" | sed 's/-/ /g' | awk '{for(i=1;i<=NF;i++) printf toupper(substr($i,1,1))}')
+
+if [ -f "$AGENTIC_DIR/${COMPONENT_NAME}_DEVELOPMENT.md" ] || \
+   [ -f "$AGENTIC_DIR/$DEV_GUIDE" ] || \
+   [ -f "$AGENTIC_DIR/${ABBREV}_DEVELOPMENT.md" ]; then
     echo "  ✅ Component development guide exists"
 else
-    record_warning "No ${COMPONENT_NAME}_DEVELOPMENT.md (recommended for Tier 2)"
+    record_warning "No ${COMPONENT_NAME}_DEVELOPMENT.md or ${ABBREV}_DEVELOPMENT.md (recommended for Tier 2)"
     echo "  ⚠️  No component development guide"
 fi
 
-if [ -f "$AGENTIC_DIR/${COMPONENT_NAME}_TESTING.md" ] || [ -f "$AGENTIC_DIR/$TEST_GUIDE" ]; then
+if [ -f "$AGENTIC_DIR/${COMPONENT_NAME}_TESTING.md" ] || \
+   [ -f "$AGENTIC_DIR/$TEST_GUIDE" ] || \
+   [ -f "$AGENTIC_DIR/${ABBREV}_TESTING.md" ]; then
     echo "  ✅ Component testing guide exists"
 else
-    record_warning "No ${COMPONENT_NAME}_TESTING.md (recommended for Tier 2)"
+    record_warning "No ${COMPONENT_NAME}_TESTING.md or ${ABBREV}_TESTING.md (recommended for Tier 2)"
     echo "  ⚠️  No component testing guide"
 fi
 echo ""
 
 # 10. Quality assessment (documentation size, navigation, exec-plans)
-echo "📋 [10/10] Quality assessment..."
+echo "📋 [11/11] Quality assessment..."
 if [ -d "$AGENTIC_DIR" ]; then
     # Calculate documentation size (should be ~60% smaller than single-tier)
     TOTAL_LINES=$(find "$AGENTIC_DIR" -name "*.md" -type f -exec wc -l {} + | tail -1 | awk '{print $1}')
@@ -252,13 +347,17 @@ if [ -d "$AGENTIC_DIR" ]; then
 
     # Check AGENTS.md navigation quality
     if [ -f "$AGENTS_FILE" ]; then
-        INTERNAL_LINKS=$(grep -c '\[.*\](./' "$AGENTS_FILE" 2>/dev/null || echo 0)
-        TIER1_LINKS=$(grep -c 'github.com/openshift/enhancements.*agentic' "$AGENTS_FILE" 2>/dev/null || echo 0)
+        # Count internal links (both ./path and relative path formats)
+        INTERNAL_LINKS=$(grep -o '\[.*\](\./' "$AGENTS_FILE" 2>/dev/null | wc -l || echo 0)
+        RELATIVE_LINKS=$(grep -o '\[.*\](agentic/' "$AGENTS_FILE" 2>/dev/null | wc -l || echo 0)
+        TOTAL_INTERNAL=$((INTERNAL_LINKS + RELATIVE_LINKS))
 
-        if [ "$INTERNAL_LINKS" -lt 3 ]; then
-            echo "  ⚠️  AGENTS.md has few internal links ($INTERNAL_LINKS) - consider adding more navigation"
+        TIER1_LINKS=$(grep -o 'github.com/openshift/enhancements.*agentic' "$AGENTS_FILE" 2>/dev/null | wc -l || echo 0)
+
+        if [ "$TOTAL_INTERNAL" -lt 3 ]; then
+            echo "  ⚠️  AGENTS.md has few internal links ($TOTAL_INTERNAL) - consider adding more navigation"
         else
-            echo "  ℹ️  Navigation: $INTERNAL_LINKS internal links, $TIER1_LINKS Tier 1 references"
+            echo "  ℹ️  Navigation: $TOTAL_INTERNAL internal links, $TIER1_LINKS Tier 1 references"
         fi
     fi
 

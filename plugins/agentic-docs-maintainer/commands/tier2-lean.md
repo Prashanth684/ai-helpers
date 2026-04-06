@@ -43,13 +43,15 @@ Creates **lean** Tier 2 agentic documentation for OpenShift component repositori
 **Lean structure (~2,500 lines vs 6,000 for single-tier):**
 ```
 component-repo/
-├── AGENTS.md                      [~60-80 lines, links to Tier 1]
+├── AGENTS.md                      [~60-100 lines, links to Tier 1]
 ├── ARCHITECTURE.md
 └── agentic/
     ├── domain/                    [Component concepts ONLY]
     ├── architecture/              [Component internals]
     ├── decisions/                 [Component ADRs ONLY]
     ├── exec-plans/
+    │   ├── active/                [Features being implemented]
+    │   └── completed/             [Completed features]
     ├── [COMPONENT]_DEVELOPMENT.md [Lean, component-specific]
     ├── [COMPONENT]_TESTING.md     [Lean, component-specific]
     └── references/
@@ -73,8 +75,8 @@ cd machine-config-operator
 /agentic-docs-maintainer:tier2-lean
 
 # Creates:
-# - AGENTS.md (60 lines)
-# - agentic/domain/, architecture/, decisions/
+# - AGENTS.md (60-100 lines)
+# - agentic/domain/, architecture/, decisions/, exec-plans/
 # - agentic/references/ecosystem.md (links to Tier 1)
 # - MCO_DEVELOPMENT.md, MCO_TESTING.md (lean)
 ```
@@ -100,7 +102,7 @@ cd machine-config-operator
 /agentic-docs-maintainer:tier2-lean --verify
 
 # Checks:
-# ✅ AGENTS.md ≤80 lines
+# ✅ AGENTS.md ≤100 lines
 # ✅ No generic duplication
 # ✅ ecosystem.md exists
 # ✅ All Tier 1 links valid
@@ -109,7 +111,7 @@ cd machine-config-operator
 ## Validation Criteria
 
 **Tier 2 docs pass when:**
-- ✅ AGENTS.md ≤ 80 lines
+- ✅ AGENTS.md ≤ 100 lines
 - ✅ Zero generic content duplication
 - ✅ ecosystem.md exists with Tier 1 links
 - ✅ Component-specific content only
@@ -203,11 +205,13 @@ bash "$SKILL_DIR/scripts/create-structure.sh" "$REPO_PATH"
 
 What the script does:
 - Creates empty directories (domain/, architecture/, decisions/, references/, exec-plans/)
+- Creates exec-plans/template.md for feature planning
+- Creates exec-plans/README.md with usage guide
 
 **Step 2: LLM - Create lean documentation**
 
 LLM reads SKILL.md and creates:
-- AGENTS.md (~60-80 lines)
+- AGENTS.md (~60-100 lines, includes exec-plans/ in structure)
 - Component-specific domain concepts
 - Component architecture docs
 - Component ADRs
@@ -217,7 +221,8 @@ LLM reads SKILL.md and creates:
 Key principles:
 - Component-specific content ONLY
 - Links to Tier 1 for generic patterns
-- AGENTS.md ≤80 lines
+- AGENTS.md ≤100 lines
+- Guidance on using exec-plans/ for feature planning
 
 **Step 3: SCRIPT - Validate**
 ```bash
@@ -225,7 +230,7 @@ bash "$SKILL_DIR/scripts/validate.sh" "$REPO_PATH/agentic"
 ```
 
 What the script does:
-- Checks AGENTS.md ≤80 lines
+- Checks AGENTS.md ≤100 lines
 - Verifies no generic duplication
 - Confirms ecosystem.md exists
 
@@ -239,7 +244,7 @@ bash "$SKILL_DIR/scripts/validate.sh" "$REPO_PATH/agentic"
 ```
 
 What the script does:
-- Checks AGENTS.md ≤80 lines
+- Checks AGENTS.md ≤100 lines
 - Verifies no generic content duplication
 - Confirms ecosystem.md exists with Tier 1 links
 - Reports validation results (read-only, no changes)
@@ -259,7 +264,7 @@ LLM analyzes existing single-tier documentation:
    - STRIDE/SLO/etc → Remove, link to Tier 1
 3. Keeps component-specific content (~3,600 lines)
 4. Creates ecosystem.md with Tier 1 links
-5. Reduces AGENTS.md from ~143 lines to ~60 lines
+5. Reduces AGENTS.md from ~143 lines to ~60-100 lines
 
 **Step 2: SCRIPT - Validate**
 ```bash
@@ -307,7 +312,7 @@ LLM reads task file and updates:
 Critical rules:
 - Component-specific content ONLY
 - NO generic content duplication
-- Keep AGENTS.md ≤80 lines
+- Keep AGENTS.md ≤100 lines
 - Update ecosystem.md for new Tier 1 links
 
 **Step 4: SCRIPT - Re-validate**
@@ -329,7 +334,7 @@ Component: machine-config-operator
 Repository: /path/to/repo
 
 Structure Created:
-  - AGENTS.md: 60 lines (target: ≤80) ✅
+  - AGENTS.md: 78 lines (target: ≤100) ✅
   - Domain concepts: 4 files
   - Architecture docs: 3 files
   - Component ADRs: 3 files
@@ -342,7 +347,7 @@ Tier 1 Links:
   - Cross-repo ADRs: 3 links ✅
 
 Validation:
-  ✅ AGENTS.md ≤80 lines
+  ✅ AGENTS.md ≤100 lines
   ✅ No generic duplication detected
   ✅ ecosystem.md created with Tier 1 links
   ✅ Component-specific content only

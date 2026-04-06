@@ -15,8 +15,5 @@
     "tier1-ecosystem",
     "tier2-lean"
   ],
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/openshift/tmp/ai-helpers"
-  }
+  "repository": "/home/psundara/ws/src/github.com/openshift/tmp/ai-helpers"
 }

@@ -7,9 +7,70 @@ model: sonnet
 
 # Agentic Docs Creator - Tier 1 Ecosystem Hub
 
-## ⚡ Quick Start - Execution Flow
+## 🚨 MANDATORY EXECUTION PROTOCOL 🚨
 
-**READ THIS FIRST to understand the execution model:**
+**⚠️ BLOCKING REQUIREMENT: Execute scripts FIRST. DO NOT manually create files/directories.**
+
+**YOU MUST execute these steps in exact order:**
+
+### Phase 1: SCRIPTS - Setup (Run ALL scripts first)
+
+- [ ] **Step 1: Run discovery script**
+      ```bash
+      SKILL_DIR=$(find ~/.claude/plugins/cache -path "*/agentic-docs-creator" -type d | head -1)
+      REPO_PATH="/path/to/openshift/enhancements"  # or provided path
+      bash "$SKILL_DIR/scripts/discover.sh" "$REPO_PATH"
+      ```
+      **What it does:** Checks if agentic/ exists, learns existing conventions
+      
+- [ ] **Step 2: Run structure script** (if agentic/ doesn't exist)
+      ```bash
+      bash "$SKILL_DIR/scripts/create-structure.sh" "$REPO_PATH"
+      ```
+      **What it does:** Creates empty directory tree
+      ❌ **DO NOT:** Run `mkdir -p agentic/...` manually
+      
+- [ ] **Step 3: Run populate script** (if agentic/ doesn't exist)
+      ```bash
+      bash "$SKILL_DIR/scripts/populate-templates.sh" "$REPO_PATH"
+      ```
+      **What it does:** Copies DESIGN_PHILOSOPHY.md and KNOWLEDGE_GRAPH.md
+      ❌ **DO NOT:** Create these files manually
+
+- [ ] **Step 4: Run fill-gaps script** (if agentic/ already exists)
+      ```bash
+      bash "$SKILL_DIR/scripts/fill-gaps.sh" "$REPO_PATH"
+      ```
+      **What it does:** Identifies missing files
+
+### Phase 2-7: LLM - Create Documentation (YOU do this)
+
+- [ ] **Phase 2:** Create OPENSHIFT_AGENTS.md (~150-170 lines)
+- [ ] **Phase 3:** Create platform patterns (operator-patterns/, openshift-specifics/)
+- [ ] **Phase 4:** Create engineering practices (testing/, security/, reliability/, development/)
+- [ ] **Phase 5:** Create domain concepts (kubernetes/, openshift/)
+- [ ] **Phase 6:** Create cross-repo ADRs (decisions/)
+- [ ] **Phase 7:** Create references and indices (references/, index files)
+
+### Phase 8: SCRIPT - Validation (Two-Phase)
+
+- [ ] **Run validation script** (automatically runs both phases)
+      ```bash
+      bash "$SKILL_DIR/scripts/validate.sh" "$REPO_PATH"
+      ```
+      **What it does:** 
+      - Phase 1: Checks content minimums (≥5 operator patterns, ≥3 ADRs, etc.)
+      - Phase 2: Checks structure (links, references, no component-specific content)
+      ❌ **DO NOT:** Run inline validation commands manually
+      ❌ **DO NOT:** Skip validation if either phase fails
+
+### Phase 9: Report Results (YOU do this)
+
+- [ ] Report what was created, validation results, next steps
+
+---
+
+## ⚡ Execution Model Summary
 
 ### Two-Phase Execution
 1. **SCRIPTS** (Phase 1): Setup directories and copy templates
@@ -49,6 +110,59 @@ Creates **Tier 1 agentic documentation** in the `openshift/enhancements` reposit
 - Component architecture internals
 - Component-specific decisions
 - Component work tracking
+
+## 🚨 CRITICAL: File Naming and Style Conventions
+
+**YOU MUST FOLLOW THESE CONVENTIONS - These are the standard patterns!**
+
+### File Naming Rules
+
+1. **Index files**: Use `index.md` NOT `README.md`
+   - ✅ `decisions/index.md`, `platform/operator-patterns/index.md`
+   - ❌ `decisions/README.md`
+
+2. **ADR naming**: Use `adr-NNNN-` prefix (4 digits with leading zeros)
+   - ✅ `decisions/adr-0001-operator-sdk.md`
+   - ❌ `decisions/001-operator-sdk.md`
+
+3. **Short file names**: Match production conventions
+   - ✅ `practices/testing/pyramid.md`, `practices/reliability/observability.md`
+   - ❌ `practices/testing/testing-pyramid.md`, `practices/reliability/observability-patterns.md`
+
+4. **Domain files**: Separate machine.md and machineconfig.md
+   - ✅ `domain/openshift/machine.md` (Machine/MachineSet/MachineDeployment)
+   - ✅ `domain/openshift/machineconfig.md` (MachineConfig/MachineConfigPool - SEPARATE file!)
+
+### File Length Targets (Reference Style, NOT Tutorial)
+
+**Files should be 150-300 lines** - be concise!
+
+- OPENSHIFT_AGENTS.md: **150-170 lines** (navigation tables, not explanations)
+- Operator patterns: **150-300 lines** (terse reference style)
+- Practices: **200-300 lines**
+- Domain concepts: **150-250 lines**
+
+**Style**: Reference/terse (like man pages), NOT tutorial/verbose. Minimal emojis.
+
+### Critical Files That MUST Be Created
+
+**Platform Operator Patterns** (8 required):
+1. `status-conditions.md`, `controller-runtime.md` (FOUNDATION - referenced everywhere)
+2. `leader-election.md`, `rbac-patterns.md`, `finalizers.md`, `webhooks.md`
+3. `owner-references.md` (garbage collection), `must-gather.md` (supportability)
+
+**Domain OpenShift** (separate files):
+1. `clusteroperator.md`, `clusterversion.md`, `route.md`
+2. `machine.md` + `machineconfig.md` (TWO separate files!)
+
+### Reference dev-guide/ Documentation
+
+Files that MUST reference existing official docs:
+- `workflows/enhancement-process.md` → `../../guidelines/enhancement_template.md`
+- `practices/development/api-evolution.md` → `../../dev-guide/api-conventions.md`
+- `practices/testing/index.md` → `../../dev-guide/test-conventions.md`
+
+**Template**: Add at top: `**Official Guide**: See [../../dev-guide/file.md]` before your content.
 
 ## When to Use This Skill
 
@@ -147,7 +261,7 @@ When you see "**Repeat for:** `leader-election.md` - How leader election works",
 - ❌ Don't create stub files with just a few lines
 - ❌ Don't skip sections that the templates include
 
-## Use Your Judgment
+## Use Your Judgment (With Mandatory Requirements)
 
 **Important**: The file suggestions in "Repeat for" sections are **examples, not requirements**. You should:
 
@@ -158,13 +272,25 @@ When you see "**Repeat for:** `leader-election.md` - How leader election works",
 - Add content that provides value to LLM agents and developers
 - Skip files if the concept is too specific or rarely used
 
+**BUT - Non-Negotiable Constraints**:
+- **Follow ALL naming conventions** documented in the conventions section above
+  - Use index.md (not README.md), adr-NNNN- format, short names
+- **Create all critical infrastructure patterns** that the ecosystem depends on
+  - Focus on patterns referenced in DESIGN_PHILOSOPHY, used by multiple operators
+  - Include supportability/operational patterns (diagnostics, observability)
+- **Keep files concise** (150-300 lines, reference style, not tutorial style)
+- **Separate distinct concepts** when production does (don't merge different APIs)
+
 ❌ **DON'T**:
 - Feel obligated to create every suggested file
 - Create files just to hit a specific count
 - Add content that duplicates what's elsewhere
 - Document every possible Kubernetes/OpenShift concept
+- **Violate any naming conventions** (index.md vs README.md matters!)
+- **Skip infrastructure patterns** that multiple operators need
+- **Create verbose tutorial-style docs** when terse reference style is needed
 
-**Example**: If you determine that "nodes.md" would just duplicate basic Kubernetes documentation available elsewhere, skip it. If "route.md" is critical for OpenShift and widely referenced, create it.
+**Example**: Skip "kubernetes/daemonset.md" if it's well-documented in K8s docs and rarely OpenShift-specific. Create "kubernetes/pod.md" if it's fundamental and frequently referenced. Use your judgment on what's critical, but always follow conventions and create infrastructure patterns.
 
 ## Task Execution
 
@@ -176,34 +302,37 @@ This skill has a **two-phase execution model**:
 
 When the user invokes this skill, execute the following:
 
-### Phase 1: Run Setup Scripts
+### Phase 1: Discovery & Setup
 
-**Goal:** Create directory structure and copy base templates
+**Goal:** Discover existing structure or create from scratch
 
-**Actions - Run these scripts in sequence:**
+**Actions - Run discovery first, then setup:**
 
 ```bash
 # Find the skill directory
 SKILL_DIR=$(find ~/.claude/plugins/cache -path "*/agentic-docs-creator" -type d | head -1)
 REPO_PATH="${provided_path:-$PWD}"
 
-# Step 1: Create directory structure
-bash "$SKILL_DIR/scripts/create-structure.sh" "$REPO_PATH"
+# Step 1: Discovery - check what exists
+bash "$SKILL_DIR/scripts/discover.sh" "$REPO_PATH"
 
-# Step 2: Populate base templates
-bash "$SKILL_DIR/scripts/populate-templates.sh" "$REPO_PATH"
+# Step 2a: If creating from scratch
+if [ ! -d "$REPO_PATH/agentic" ]; then
+    bash "$SKILL_DIR/scripts/create-structure.sh" "$REPO_PATH"
+    bash "$SKILL_DIR/scripts/populate-templates.sh" "$REPO_PATH"
+fi
+
+# Step 2b: If agentic/ exists - identify gaps
+if [ -d "$REPO_PATH/agentic" ]; then
+    bash "$SKILL_DIR/scripts/fill-gaps.sh" "$REPO_PATH"
+fi
 ```
 
 **What the scripts do:**
-- `create-structure.sh`: 
-  - Validates this is openshift/enhancements repository
-  - Checks /agentic directory doesn't exist
-  - Creates directory tree: platform/, practices/, domain/, decisions/, workflows/, references/
-  
-- `populate-templates.sh`:
-  - Copies 2 pre-written template files:
-    - `DESIGN_PHILOSOPHY.md` (~400 lines)
-    - `KNOWLEDGE_GRAPH.md` (~300 lines)
+- `discover.sh`: Learns existing naming conventions, counts files, suggests gaps
+- `create-structure.sh`: Creates directory tree (if new)
+- `populate-templates.sh`: Copies DESIGN_PHILOSOPHY.md and KNOWLEDGE_GRAPH.md (if new)
+- `fill-gaps.sh`: Identifies missing recommended files (if updating)
 
 **Expected structure after scripts:**
 ```
@@ -229,11 +358,235 @@ enhancements/
     └── references/
 ```
 
-**After scripts complete:** You (the LLM) create all remaining documentation starting with Phase 2.
+**After scripts complete:** You (the LLM) create all remaining documentation starting with Phase 1.5.
+
+### Phase 1.5: Check for Existing Documentation (CRITICAL)
+
+**Goal:** Identify overlaps with existing official documentation to avoid duplication
+
+**Actions:**
+
+```bash
+# Run check-existing-docs.sh script
+bash "$SKILL_DIR/scripts/check-existing-docs.sh" "$REPO_PATH"
+
+# Script exit codes:
+# 0 = No conflicts, proceed with normal creation
+# 1 = Conflicts found, reconciliation needed
+```
+
+**What the script does:**
+- Scans `../dev-guide/` for official development guides
+- Scans `../guidelines/` for enhancement/PR guidelines
+- Identifies specific files that need cross-references
+- Reports which agentic files should reference official docs
+
+**If script exits with code 1** (conflicts found), create RECONCILIATION_NEEDED.md:
+
+**File:** `RECONCILIATION_NEEDED.md` (in repo root, NOT in agentic/)
+
+**🚨 CRITICAL**: This file documents relationship to existing official docs (dev-guide/, guidelines/). You MUST create it if check-existing-docs.sh finds conflicts.
+
+```markdown
+# Documentation Reconciliation Plan
+
+**Issue**: Existing docs in openshift/enhancements that we must reference/integrate
+
+---
+
+## Existing Official Documentation Found
+
+### 📁 dev-guide/ ([count] files)
+[List files found with descriptions]
+
+### 📁 guidelines/ ([count] files)  
+[List files found with descriptions]
+
+---
+
+## Required Updates to Agentic Docs
+
+### Critical References to Add
+
+**workflows/enhancement-process.md**
+- Add banner: "**Official Template**: See [/guidelines/enhancement_template.md]"
+- Position as supplement to official template
+
+**practices/development/api-evolution.md**
+- Add banner: "**Official Guidelines**: See [/dev-guide/api-conventions.md]"
+- Reference for authoritative API design rules
+
+**practices/testing/index.md**
+- Add banner: "**Official Test Conventions**: See [/dev-guide/test-conventions.md]"
+- Reference for test naming/organization standards
+
+**references/index.md**
+- Add "📋 Official Development Guides" section
+- Link to all dev-guide/ files
+
+---
+
+## Integration Principle
+
+**DON'T duplicate official docs** - Reference and supplement instead.
+
+**Example**:
+```markdown
+# API Evolution
+
+**Official Guidelines**: See [/dev-guide/api-conventions.md](../../dev-guide/api-conventions.md)  
+**Breaking Changes**: See [/dev-guide/breaking-changes.md](../../dev-guide/breaking-changes.md)
+
+This document provides quick reference for API evolution patterns.  
+For authoritative API design guidelines, always refer to the official documents above.
+```
+
+---
+
+## What Agentic Docs Uniquely Provide
+
+Even after referencing official docs, agentic docs provide:
+
+✅ **Visual knowledge graph** - Navigation map  
+✅ **Operator patterns library** - Specific implementation patterns  
+✅ **Domain concept reference** - What resources mean  
+✅ **Repository index** - Map of all 70+ repos  
+✅ **Glossary** - Terminology reference  
+✅ **ADRs** - Why decisions were made  
+✅ **AI-friendly structure** - Progressive disclosure  
+✅ **Cross-references** - Links between related concepts  
+
+Official docs provide:
+- **Authoritative guidelines** (API conventions, test conventions)
+- **Process documentation** (enhancement template)
+- **Development workflows** (how to build, deploy)
+
+**Together**: Complete picture for both humans and agents!
+```
+
+**When to create RECONCILIATION_NEEDED.md:**
+- ✅ If ../dev-guide/ exists with >3 files
+- ✅ If ../guidelines/ exists
+- ❌ If neither exists (new repo, no existing docs)
+
+**Why this matters:**
+1. Avoid duplicating authoritative content
+2. Maintain single source of truth
+3. Help agents discover official docs
+4. Position agentic docs as complementary, not replacement
+
+**Action for Later Phases:**
+When creating files mentioned in RECONCILIATION_NEEDED.md, add official doc references at TOP:
+
+```markdown
+# Enhancement Proposal Process
+
+**Official Template**: See [../../guidelines/enhancement_template.md](../../guidelines/enhancement_template.md)
+
+This document supplements the official enhancement template with agent-friendly navigation.
+
+[Your content follows...]
+```
+
+This pattern applies to:
+- `workflows/enhancement-process.md` → reference `guidelines/enhancement_template.md`
+- `practices/development/api-evolution.md` → reference `dev-guide/api-conventions.md`
+- `practices/testing/index.md` → reference `dev-guide/test-conventions.md`
+
+---
+
+### Phase 1.6: Learn Conventions from Existing Implementation (If Exists)
+
+**Goal:** Discover and adopt naming conventions from production agentic/ if it exists
+
+**Actions:**
+
+```bash
+# Check if production agentic/ exists
+MAIN_AGENTIC="/home/psundara/ws/src/github.com/openshift/enhancements/agentic"
+
+if [ -d "$MAIN_AGENTIC" ]; then
+    echo "📚 Existing agentic/ found - learning conventions..."
+    
+    # Check index file naming (index.md vs README.md)
+    if ls "$MAIN_AGENTIC"/*/index.md >/dev/null 2>&1; then
+        echo "  ✅ Convention: Use index.md (not README.md)"
+    fi
+    
+    # Check ADR naming pattern
+    ADR_SAMPLE=$(ls "$MAIN_AGENTIC/decisions/"adr-*.md 2>/dev/null | head -1)
+    if [ -n "$ADR_SAMPLE" ]; then
+        echo "  ✅ Convention: $(basename "$ADR_SAMPLE" | grep -oE '^adr-[0-9]+-')"
+    fi
+    
+    # Check file naming style
+    if [ -f "$MAIN_AGENTIC/practices/testing/pyramid.md" ]; then
+        echo "  ✅ Convention: Short names (pyramid.md not testing-pyramid.md)"
+    fi
+    
+    # Sample file lengths
+    echo "  📏 Existing file lengths:"
+    wc -l "$MAIN_AGENTIC/platform/operator-patterns/"*.md 2>/dev/null | tail -3 | head -2
+    
+    echo ""
+    echo "⚠️  ADOPT THESE EXACT CONVENTIONS in your generated files!"
+else
+    echo "ℹ️  No production agentic/ found - using default conventions"
+    echo "   - index.md for navigation files"
+    echo "   - adr-NNNN- for ADRs (4 digits)"
+    echo "   - Short file names (pyramid.md not testing-pyramid.md)"
+    echo "   - Target 150-300 lines per file"
+fi
+```
+
+**Expected Learning:**
+1. Index file naming convention (index.md confirmed)
+2. ADR naming format (adr-0001-, adr-0002-, etc.)
+3. File naming style (short names preferred)
+4. Typical file length ranges (for matching production style)
+
+**If existing found:** Match its conventions exactly (overrides defaults)
+**If not found:** Use defaults documented in conventions section above
+
+---
 
 ### Phase 2: Create Master Entry Point
 
-**Goal:** Create OPENSHIFT_AGENTS.md (~150-170 lines)
+**Goal:** Create OPENSHIFT_AGENTS.md (~150-170 lines) 🚨 **STRICT LENGTH REQUIREMENT**
+
+**CRITICAL**: This file MUST be **150-170 lines**. Target is ~167 lines.
+
+**Style**: Navigation-focused with tables, NOT tutorial-style with explanations.
+
+**🚨 MANDATORY SECTIONS (Key Requirements)**:
+1. **AI Navigation Section** at TOP (immediately after metadata) - This is NOT optional!
+2. **Explicit examples** in AI section (e.g., "Building operator? → DESIGN_PHILOSOPHY.md → controller-runtime.md...")
+3. **Reference to KNOWLEDGE_GRAPH.md** as primary navigation tool
+4. **"DON'T read all docs" warning** - AI agents MUST see this first
+5. **Concrete navigation steps** (1. Read KNOWLEDGE_GRAPH.md, 2. Use tables, 3. Read 4-5 docs)
+
+**DON'T** (too verbose):
+```markdown
+## For AI Agents: Common Usage Patterns
+
+**Understanding Concepts**: Start with domain/kubernetes/ to learn K8s fundamentals,
+then move to domain/openshift/ for OpenShift extensions, and review DESIGN_PHILOSOPHY.md
+for the "why" behind design choices...
+```
+
+**DO** (concise navigation):
+```markdown
+## Quick Navigation by Role
+
+**Working on a specific component** → [Repository index](./references/repo-index.md)  
+**Understanding OpenShift platform** → [Platform architecture](./platform/)
+
+## Core Platform Concepts
+
+| Concept | Description | Link |
+|---------|-------------|------|
+| ClusterOperator | Operator status | [clusteroperator.md](./domain/openshift/clusteroperator.md) |
+```
 
 **File:** `agentic/OPENSHIFT_AGENTS.md`
 
@@ -245,76 +598,162 @@ enhancements/
 
 **Version**: 1.0  
 **Last Updated**: YYYY-MM-DD  
+**Repository**: openshift/enhancements  
+
+**NEW**: [Visual Knowledge Graph](./KNOWLEDGE_GRAPH.md) - See the big picture first!  
+
+---
+
+## For AI Agents: Navigation Strategy
+
+**DON'T read all 45+ docs**. Use [KNOWLEDGE_GRAPH.md](./KNOWLEDGE_GRAPH.md) to find your task path (4-5 docs).
+
+**Steps**: 
+1. Read KNOWLEDGE_GRAPH.md (2 min)
+2. Use "I want to..." table for direct links
+3. Read task-specific docs only (~1500 lines)
+4. Reference glossary/indexes on-demand
+
+**Examples**:
+- Building operator? → DESIGN_PHILOSOPHY.md → controller-runtime.md → status-conditions.md → implementing-features.md (done)
+- Adding feature? → implementing-features.md → enhancement-process.md → api-evolution.md (done)
+- Debugging issue? → observability.md → must-gather.md → repo-index.md (done)
+
+**Pattern**: Foundation (philosophy) → Task-specific patterns → Implementation. Not everything sequentially.
+
+---
 
 ## Quick Navigation by Role
 
 **Working on a specific component**  
-→ [Repo index](./references/repo-index.md)
+→ [Repository index](./references/repo-index.md) - Find your component
 
 **Understanding OpenShift platform**  
-→ [Platform architecture](./platform/)
+→ [Platform architecture](./platform/) - How OpenShift works
 
 **Implementing cross-repo feature**  
-→ [Enhancement proposals](../enhancements/)
+→ [Enhancement proposals](../enhancements/) - Feature designs across repos
 
 **Learning engineering practices**  
-→ [Practices](./practices/)
+→ [Practices](./practices/) - Testing, security, reliability, development
 
-## Core Platform Concepts
-
-| Concept | Description | Link |
-|---------|-------------|------|
-| ClusterOperator | How operators report status | [clusteroperator.md](./domain/openshift/clusteroperator.md) |
-| ClusterVersion | Platform upgrades | [clusterversion.md](./domain/openshift/clusterversion.md) |
-| Machine API | Node lifecycle | [machine.md](./domain/openshift/machine.md) |
-| Route | OpenShift routing | [route.md](./domain/openshift/route.md) |
-| Pod | K8s workload unit | [pods.md](./domain/kubernetes/pods.md) |
-| Node | K8s cluster nodes | [nodes.md](./domain/kubernetes/nodes.md) |
-| Service | K8s service discovery | [services.md](./domain/kubernetes/services.md) |
-
-## Standard Operator Patterns
-
-| Pattern | Purpose | Link |
-|---------|---------|------|
-| Status Conditions | Available/Progressing/Degraded | [status-conditions.md](./platform/operator-patterns/status-conditions.md) |
-| controller-runtime | Reconciliation loops | [controller-runtime.md](./platform/operator-patterns/controller-runtime.md) |
-| Leader Election | HA for controllers | [leader-election.md](./platform/operator-patterns/leader-election.md) |
-| RBAC Patterns | ServiceAccount design | [rbac-patterns.md](./platform/operator-patterns/rbac-patterns.md) |
-| Finalizers | Resource cleanup | [finalizers.md](./platform/operator-patterns/finalizers.md) |
-| Webhooks | Admission control | [webhooks.md](./platform/operator-patterns/webhooks.md) |
-
-## Component Repository Index
-
-See [repo-index.md](./references/repo-index.md) for all component repositories.
-
-## Engineering Practices
-
-| Practice | Link |
-|----------|------|
-| Testing Pyramid | [pyramid.md](./practices/testing/pyramid.md) |
-| E2E Framework | [e2e-framework.md](./practices/testing/e2e-framework.md) |
-| CI Integration | [ci-integration.md](./practices/testing/ci-integration.md) |
-| Threat Modeling | [threat-modeling.md](./practices/security/threat-modeling.md) |
-| RBAC Guidelines | [rbac-guidelines.md](./practices/security/rbac-guidelines.md) |
-| SLO Framework | [slo-framework.md](./practices/reliability/slo-framework.md) |
-| Observability | [observability.md](./practices/reliability/observability.md) |
-| Git Workflow | [git-workflow.md](./practices/development/git-workflow.md) |
-| Code Review | [code-review.md](./practices/development/code-review.md) |
-| API Evolution | [api-evolution.md](./practices/development/api-evolution.md) |
-
-## Cross-Repo Architectural Decisions
-
-See [decisions/](./decisions/) for ADRs affecting multiple repositories.
+**Understanding decisions**  
+→ [Architectural decisions](./decisions/) - Cross-repo ADRs
 
 ---
 
-**Constraint**: This file should be ~150-170 lines (concise entry point).
+## Core Platform Concepts
+
+| Concept | Description | Documentation |
+|---------|-------------|---------------|
+| **ClusterOperator** | How operators report status to CVO | [clusteroperator.md](./domain/openshift/clusteroperator.md) |
+| **ClusterVersion** | Platform upgrade coordination | [clusterversion.md](./domain/openshift/clusterversion.md) |
+| **Machine API** | Node lifecycle management | [machine.md](./domain/openshift/machine.md) |
+| **Custom Resource** | Kubernetes API extensions | [crds.md](./domain/kubernetes/crds.md) |
+| **Operator Pattern** | Controller reconciliation | [operator-patterns/](./platform/operator-patterns/) |
+
+---
+
+## Standard Operator Patterns
+
+All OpenShift operators follow these patterns:
+
+| Pattern | Purpose | Documentation |
+|---------|---------|---------------|
+| **Status Conditions** | Available/Progressing/Degraded reporting | [status-conditions.md](./platform/operator-patterns/status-conditions.md) |
+| **controller-runtime** | Reconciliation loops | [controller-runtime.md](./platform/operator-patterns/controller-runtime.md) |
+| **Leader Election** | High availability for controllers | [leader-election.md](./platform/operator-patterns/leader-election.md) |
+| **RBAC Patterns** | ServiceAccount and Role design | [rbac-patterns.md](./platform/operator-patterns/rbac-patterns.md) |
+| **Upgrade Strategies** | Rolling updates and version skew | [upgrade-strategies.md](./platform/operator-patterns/upgrade-strategies.md) |
+
+---
+
+## Engineering Practices
+
+All OpenShift repositories follow these practices:
+
+| Practice | Documentation |
+|----------|---------------|
+| **Testing Pyramid** | Unit → Integration → E2E strategy | [pyramid.md](./practices/testing/pyramid.md) |
+| **E2E Framework** | openshift-tests usage | [e2e-framework.md](./practices/testing/e2e-framework.md) |
+| **CI Integration** | Prow and OpenShift CI | [ci-integration.md](./practices/testing/ci-integration.md) |
+| **Threat Modeling** | STRIDE security analysis | [threat-modeling.md](./practices/security/threat-modeling.md) |
+| **RBAC Guidelines** | Least privilege security | [rbac-guidelines.md](./practices/security/rbac-guidelines.md) |
+| **SLO Framework** | Defining service level objectives | [slo-framework.md](./practices/reliability/slo-framework.md) |
+| **Observability** | Metrics, logging, tracing | [observability.md](./practices/reliability/observability.md) |
+| **Git Workflow** | Branching and commit standards | [git-workflow.md](./practices/development/git-workflow.md) |
+| **API Evolution** | Versioning and breaking changes | [api-evolution.md](./practices/development/api-evolution.md) |
+
+---
+
+## Component Repository Index
+
+**Find your component**: [repo-index.md](./references/repo-index.md)
+
+70+ repositories organized by: Core Platform, Networking, Storage, Auth, Monitoring, Logging, Developer Experience. [See full index](./references/repo-index.md)
+
+---
+
+## Cross-Repo Architectural Decisions
+
+Platform-wide decisions affecting multiple repositories:
+
+[decisions/](./decisions/) - All architectural decision records (ADRs)
+
+**Key decisions**:
+- Why OpenShift uses etcd for cluster state
+- Why CVO coordinates operator upgrades
+- Platform-wide operator patterns
+- [See all ADRs](./decisions/index.md)
+
+---
+
+## Relationship to Other Documentation
+
+**This directory (`/agentic`)**: Structured knowledge for AI agents  
+**[/enhancements](../enhancements/)**: Enhancement proposals (WHAT to build)  
+**[/dev-guide](../dev-guide/)**: Human-readable guides (HOW to build)  
+
+These complement each other:
+- Enhancements describe features and proposals
+- Dev-guide provides narrative tutorials
+- Agentic provides structured knowledge for agents
+
+---
+
+## How to Use This Documentation
+
+**For AI agents**:
+1. **Start**: OPENSHIFT_AGENTS.md (this file) - You are here
+2. **Navigate**: [KNOWLEDGE_GRAPH.md](./KNOWLEDGE_GRAPH.md) - Get task-specific reading path
+3. **Foundation**: [DESIGN_PHILOSOPHY.md](./DESIGN_PHILOSOPHY.md) - Understand WHY (read this for any task)
+4. **Task-specific**: Follow path from knowledge graph (4-5 docs per task)
+5. **Reference**: Use [glossary.md](./references/glossary.md), [repo-index.md](./references/repo-index.md) on-demand
+6. **Official docs**: When agentic docs reference `/dev-guide/*`, read those for authoritative specs
+
+**For humans**:
+- Use [/dev-guide](../dev-guide/) for tutorials and narratives
+- Use [/enhancements](../enhancements/) for feature proposals
+- Use `/agentic` for structured reference
+
+**Key principle**: Progressive disclosure - read foundation + task-specific docs only. Don't read all 45+ docs.
+
+---
+
+**Constraint**: This file MUST remain ≤170 lines for fast navigation.
 ```
 
-**Validation:**
+**Validation (MANDATORY CHECK):**
 ```bash
-wc -l agentic/OPENSHIFT_AGENTS.md
-# Target: 150-170 lines
+LINE_COUNT=$(wc -l < agentic/OPENSHIFT_AGENTS.md)
+echo "OPENSHIFT_AGENTS.md: $LINE_COUNT lines"
+
+if [ $LINE_COUNT -gt 180 ] || [ $LINE_COUNT -lt 140 ]; then
+    echo "⚠️  WARNING: File is $LINE_COUNT lines (target: 150-170)"
+    echo "    Target is ~167 lines - please revise to be more concise!"
+    echo "    Use navigation tables, not tutorial explanations."
+fi
+# Target: 150-170 lines (production: 167 lines)
 ```
 
 ### Phase 3: Create Platform Patterns
@@ -2152,8 +2591,71 @@ Map of all OpenShift component repositories with their agentic documentation.
 - 📝 Not started
 ```
 
-**Also create** (follow repo-index.md pattern):
-- `references/index.md` - Navigation hub for all reference materials
+**Also create these reference files:**
+
+#### 7.1: `references/index.md`
+
+```markdown
+# References Index
+
+**Purpose**: Indices and cross-references for navigating OpenShift documentation
+
+**Last Updated**: YYYY-MM-DD  
+
+---
+
+## 📋 Official Development Guides
+
+**Primary Location**: [/dev-guide/](../../dev-guide/)
+
+Essential official documents:
+
+| Guide | Purpose | Link |
+|-------|---------|------|
+| **API Conventions** | Official API design rules | [api-conventions.md](../../dev-guide/api-conventions.md) |
+| **Operators** | What is an operator? Build/test/deploy | [operators.md](../../dev-guide/operators.md) |
+| **Test Conventions** | Test naming, annotations, organization | [test-conventions.md](../../dev-guide/test-conventions.md) |
+| **Feature Zero to Hero** | Complete feature development lifecycle | [feature-zero-to-hero.md](../../dev-guide/feature-zero-to-hero.md) |
+| **Breaking Changes** | How to handle breaking changes | [breaking-changes.md](../../dev-guide/breaking-changes.md) |
+| **Featuresets** | Feature gates and tech preview | [featuresets.md](../../dev-guide/featuresets.md) |
+
+**Browse all**: [/dev-guide/](../../dev-guide/) has 18+ development guides
+
+**Enhancement Guidelines**: [/guidelines/](../../guidelines/) - Enhancement template, PR guidelines, supportability
+
+---
+
+## Agentic Reference Indices
+
+| Index | Purpose | Link |
+|-------|---------|------|
+| **Repository Index** | Map all OpenShift component repos | [repo-index.md](./repo-index.md) |
+| **Enhancement Index** | Browse enhancement proposals | [enhancement-index.md](./enhancement-index.md) |
+| **Glossary** | OpenShift terminology reference | [glossary.md](./glossary.md) |
+| **API Reference** | OpenShift API overview | [api-reference.md](./api-reference.md) |
+
+---
+
+## Quick Links
+
+**Component Repos**: [repo-index.md](./repo-index.md)  
+**Enhancement Proposals**: [/enhancements/](../../enhancements/)  
+**Dev Guide**: [/dev-guide/](../../dev-guide/)  
+**Platform Patterns**: [/agentic/platform/](../platform/)  
+**Engineering Practices**: [/agentic/practices/](../practices/)  
+
+---
+
+## Navigation Tips
+
+**Starting from scratch**: Begin at [/agentic/OPENSHIFT_AGENTS.md](../OPENSHIFT_AGENTS.md)  
+**Finding a component**: Use [repo-index.md](./repo-index.md)  
+**Finding a feature**: Browse [/enhancements/](../../enhancements/) or use [enhancement-index.md](./enhancement-index.md)  
+**Learning patterns**: See [/agentic/platform/](../platform/)  
+**Understanding practices**: See [/agentic/practices/](../practices/)  
+```
+
+#### 7.2: Create other reference files
 - `references/glossary.md` - OpenShift and Kubernetes terminology
 - `references/enhancement-index.md` - Index of all enhancements by category
 - `references/api-reference.md` - Quick reference for platform APIs
@@ -2536,7 +3038,7 @@ Create MachineConfig → MCO renders for pool → Node applies → Node reboots
 
 ### Phase 8: Validation
 
-**Goal:** Verify Tier 1 structure and compliance
+**Goal:** Verify Tier 1 structure and compliance using two-phase validation
 
 **Actions - Run validation script:**
 ```bash
@@ -2544,17 +3046,38 @@ Create MachineConfig → MCO renders for pool → Node applies → Node reboots
 SKILL_DIR=$(find ~/.claude/plugins/cache -path "*/agentic-docs-creator" -type d | head -1)
 REPO_PATH="${provided_path:-$PWD}"
 
-# Run validation
+# Run comprehensive validation (runs both phases automatically)
 bash "$SKILL_DIR/scripts/validate.sh" "$REPO_PATH"
 ```
 
-**What the script checks:**
-- OPENSHIFT_AGENTS.md exists and is ~150-170 lines
-- All required directories present
-- All required files exist
-- No component-specific content in Tier 1
-- Links are valid
-- Structure complies with SPECIFICATION.md
+**Two-Phase Validation Process:**
+
+**Phase 1: Content Minimums** (validate-categories.sh)
+- ✅ Platform operator patterns: ≥5 files
+- ✅ OpenShift specifics: ≥2 files
+- ✅ Testing practices: ≥3 files
+- ✅ Security practices: ≥2 files
+- ✅ Reliability practices: ≥2 files
+- ✅ Development practices: ≥2 files
+- ✅ Kubernetes concepts: ≥1 file
+- ✅ OpenShift concepts: ≥3 files
+- ✅ ADRs (decisions): ≥3 files
+- ✅ Workflows: ≥1 file
+- ✅ References: ≥2 files
+
+**Phase 2: Structural Checks** (validate.sh)
+- ✅ Entry points exist (OPENSHIFT_AGENTS.md, DESIGN_PHILOSOPHY.md, KNOWLEDGE_GRAPH.md)
+- ✅ OPENSHIFT_AGENTS.md is ~150-200 lines
+- ✅ No component-specific content
+- ✅ All internal links valid
+- ✅ All dev-guide references valid
+- ✅ Index files list all content
+- ✅ Core pattern files exist
+- ✅ Quality assessment
+
+**If validation fails:**
+- Phase 1 failure: Add missing content to meet minimums
+- Phase 2 failure: Fix broken links, remove component-specific content, etc.
 
 ### Phase 9: Report Results
 

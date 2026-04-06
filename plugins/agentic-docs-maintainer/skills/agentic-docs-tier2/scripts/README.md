@@ -44,7 +44,7 @@ Validates Tier 2 lean documentation compliance.
 ```
 
 **Checks performed:**
-1. AGENTS.md exists and ≤80 lines (NOT 150 like Tier 1)
+1. AGENTS.md exists and ≤100 lines (NOT 150 like Tier 1)
 2. ecosystem.md exists with Tier 1 links (≥5 recommended)
 3. No generic content duplication (testing pyramid, controller-runtime philosophy, etc.)
 4. Domain concepts are component-specific (not Pod, Node, Service)
@@ -163,7 +163,7 @@ cd /path/to/machine-config-operator
     - machineconfiguration.openshift.io/v1/MachineConfigNode
 
 🔍 Validating compliance...
-  ❌ AGENTS.md is 85 lines (must be ≤80 for Tier 2 lean)
+  ❌ AGENTS.md is 110 lines (must be ≤100 for Tier 2 lean)
 
 📝 Task created: .tier2-maintenance-iteration-1.md
 
@@ -182,11 +182,12 @@ Press Enter when iteration 1 complete...
 ./create-structure.sh /path/to/component
 
 # 2. Populate with component-specific content (AI or manual)
-# - Create AGENTS.md (≤80 lines, link to Tier 1)
+# - Create AGENTS.md (≤100 lines, link to Tier 1, show exec-plans/)
 # - Create ecosystem.md (link to Tier 1 patterns)
 # - Document component domain concepts
 # - Document component architecture
 # - Create component-specific ADRs
+# - Use exec-plans/active/ for feature planning
 # - Create exec-plans for active work
 
 # 3. Validate
@@ -266,19 +267,20 @@ jobs:
 
 **CRITICAL - These are enforced by validate.sh:**
 
-1. ✅ **AGENTS.md ≤80 lines** (NOT 150 like Tier 1)
-2. ❌ **NO generic content duplication**
+1. ✅ **AGENTS.md ≤100 lines** (NOT 150 like Tier 1)
+2. ✅ **AGENTS.md must show exec-plans/ directory structure**
+3. ❌ **NO generic content duplication**
    - Link to Tier 1 instead of duplicating
    - Examples of forbidden: testing pyramid, controller-runtime philosophy, STRIDE threat model
-3. ✅ **ecosystem.md must exist** with Tier 1 links
-4. ✅ **Component-specific only**
+4. ✅ **ecosystem.md must exist** with Tier 1 links
+5. ✅ **Component-specific only**
    - Domain: Component CRDs/APIs only (not Pod, Node, Service)
    - ADRs: Component decisions only (not cross-repo like "use etcd")
 5. ✅ **Lean structure** (no practices/, workflows/ like single-tier)
 
 ## Troubleshooting
 
-**"AGENTS.md is 85 lines (must be ≤80)"**
+**"AGENTS.md is 110 lines (must be ≤100)"**
 - Entry point too long for Tier 2 lean
 - Move details to agentic/ subdirectories
 - Link to details instead of inline

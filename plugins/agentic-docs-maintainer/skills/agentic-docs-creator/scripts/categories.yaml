@@ -1,0 +1,104 @@
+# Category-based validation for Tier 1 agentic documentation
+# This is FLEXIBLE - we check categories have content, not exact file lists
+
+# Required categories (directories that should exist and have content)
+required_categories:
+  - path: platform/operator-patterns
+    description: Operator implementation patterns
+    min_files: 5
+
+  - path: platform/openshift-specifics
+    description: OpenShift platform-specific patterns
+    min_files: 2
+
+  - path: practices/testing
+    description: Testing practices and frameworks
+    min_files: 3
+
+  - path: practices/security
+    description: Security practices
+    min_files: 2
+
+  - path: practices/reliability
+    description: Reliability and observability
+    min_files: 2
+
+  - path: practices/development
+    description: Development practices
+    min_files: 2
+
+  - path: domain/kubernetes
+    description: Kubernetes core concepts
+    min_files: 1
+
+  - path: domain/openshift
+    description: OpenShift platform concepts
+    min_files: 3
+
+  - path: decisions
+    description: Architectural Decision Records (ADRs)
+    min_files: 3
+
+  - path: workflows
+    description: Process workflows
+    min_files: 1
+
+  - path: references
+    description: Reference materials
+    min_files: 2
+
+# Critical files that should exist (suggestions, not mandates)
+# If these are missing, warn but don't fail
+suggested_critical_files:
+  operator_patterns:
+    - must-gather.md
+    - owner-references.md
+    - status-conditions.md
+    - controller-runtime.md
+
+  practices:
+    - practices/security/secrets-management.md
+    - practices/reliability/alerting.md
+    - practices/testing/test-flake-policy.md
+
+  templates:
+    - decisions/adr-template.md
+
+# Naming conventions (learn from production, don't mandate)
+# These are EXAMPLES of what production uses
+common_naming_patterns:
+  testing_pyramid:
+    - pyramid.md           # Production uses this
+    - testing-pyramid.md   # Also acceptable
+
+  custom_resources:
+    - crds.md              # Production uses this
+    - crd.md               # Also acceptable
+
+  rbac:
+    - rbac-patterns.md     # Production uses this
+    - rbac.md              # Also acceptable
+
+  workflows:
+    - implementing-features.md  # Production uses this
+    - implementation.md         # Also acceptable
+
+# Core entry points (should exist)
+entry_points:
+  - OPENSHIFT_AGENTS.md
+  - DESIGN_PHILOSOPHY.md
+  - KNOWLEDGE_GRAPH.md
+
+# Optional but recommended
+recommended_enhancements:
+  - ENHANCEMENT_ROADMAP.md
+  - platform/README.md
+  - practices/README.md
+  - domain/README.md
+
+# Cross-reference validation
+cross_references:
+  check_dev_guide: true
+  warn_if_missing:
+    - "References to dev-guide/ in api-evolution.md"
+    - "References to guidelines/ in enhancement-process.md"
