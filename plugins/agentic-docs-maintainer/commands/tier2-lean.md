@@ -21,6 +21,7 @@ Creates **lean** Tier 2 agentic documentation for OpenShift component repositori
 - `--path <repo-path>`: Path to component repository (defaults to current directory)
 - `--verify`: Verify existing Tier 2 docs for compliance
 - `--extract`: Extract component-specific content from existing single-tier docs
+- `--maintain`: Ongoing maintenance - sync docs with code changes
 - No args: Create new lean Tier 2 structure
 
 ## Two-Tier Architecture
@@ -192,15 +193,132 @@ cd machine-config-operator
 
 ## Implementation
 
-Executes the agentic-docs-tier2 skill with the following phases:
+### Mode 1: Create New Tier 2 Structure (Default)
 
-1. **Assessment**: Verify OpenShift component, check Tier 1 exists
-2. **Structure**: Create lean directory tree
-3. **AGENTS.md**: Create ≤80 line entry point with Tier 1 links
-4. **ecosystem.md**: Create Tier 1 reference index (CRITICAL)
-5. **Lean guides**: Create component-specific development/testing docs
-6. **Extract** (if --extract): Remove generic content, keep component-specific
-7. **Verify**: Check compliance with Tier 2 requirements
+**Step 1: SCRIPT - Create structure**
+```bash
+SKILL_DIR=$(find ~/.claude/plugins/cache -path "*/agentic-docs-tier2" -type d | head -1)
+bash "$SKILL_DIR/scripts/create-structure.sh" "$REPO_PATH"
+```
+
+What the script does:
+- Creates empty directories (domain/, architecture/, decisions/, references/, exec-plans/)
+
+**Step 2: LLM - Create lean documentation**
+
+LLM reads SKILL.md and creates:
+- AGENTS.md (~60-80 lines)
+- Component-specific domain concepts
+- Component architecture docs
+- Component ADRs
+- ecosystem.md with Tier 1 links
+- Lean [COMPONENT]_DEVELOPMENT.md and [COMPONENT]_TESTING.md
+
+Key principles:
+- Component-specific content ONLY
+- Links to Tier 1 for generic patterns
+- AGENTS.md ≤80 lines
+
+**Step 3: SCRIPT - Validate**
+```bash
+bash "$SKILL_DIR/scripts/validate.sh" "$REPO_PATH/agentic"
+```
+
+What the script does:
+- Checks AGENTS.md ≤80 lines
+- Verifies no generic duplication
+- Confirms ecosystem.md exists
+
+---
+
+### Mode 2: Verify Existing Docs (--verify)
+
+**Step 1: SCRIPT - Run validate.sh**
+```bash
+bash "$SKILL_DIR/scripts/validate.sh" "$REPO_PATH/agentic"
+```
+
+What the script does:
+- Checks AGENTS.md ≤80 lines
+- Verifies no generic content duplication
+- Confirms ecosystem.md exists with Tier 1 links
+- Reports validation results (read-only, no changes)
+
+---
+
+### Mode 3: Extract from Single-Tier (--extract)
+
+**Step 1: LLM - Analyze and extract**
+
+LLM analyzes existing single-tier documentation:
+1. Identifies generic content duplicating Tier 1 patterns
+2. Removes generic content (~2,400 lines):
+   - Testing pyramid → Remove, link to Tier 1
+   - controller-runtime → Remove, link to Tier 1
+   - Operator patterns → Remove, link to Tier 1
+   - STRIDE/SLO/etc → Remove, link to Tier 1
+3. Keeps component-specific content (~3,600 lines)
+4. Creates ecosystem.md with Tier 1 links
+5. Reduces AGENTS.md from ~143 lines to ~60 lines
+
+**Step 2: SCRIPT - Validate**
+```bash
+bash "$SKILL_DIR/scripts/validate.sh" "$REPO_PATH/agentic"
+```
+
+---
+
+### Mode 4: Ongoing Maintenance (--maintain)
+
+**Step 1: SCRIPT - Detect code changes**
+```bash
+bash "$SKILL_DIR/scripts/detect-changes.sh" "$REPO_PATH"
+```
+
+What the script does:
+- Checks for new CRDs/API types
+- Checks for code structure changes (pkg/, cmd/)
+- Checks for new controllers/packages
+- Checks for new enhancements affecting this component
+- Checks for architectural decisions in git log
+- Checks if Tier 1 has been updated
+- Reports what needs updating
+
+**Step 2: SCRIPT - Run maintenance loop**
+```bash
+bash "$SKILL_DIR/scripts/maintenance-loop.sh" "$REPO_PATH"
+```
+
+What the script does:
+- Runs detect-changes.sh + validate.sh
+- Creates `.tier2-maintenance-iteration-N.md` task file
+- Waits for LLM intervention
+
+**Step 3: LLM - Update docs based on code changes**
+
+LLM reads task file and updates:
+- New CRD detected → Create domain/[crd-name].md
+- Code structure changed → Update architecture/components.md
+- New controller → Update architecture/components.md
+- New enhancement → Create exec-plans/active/[name].md
+- Architectural decision → Create decisions/adr-NNNN.md
+- Tier 1 updated → Update ecosystem.md links
+
+Critical rules:
+- Component-specific content ONLY
+- NO generic content duplication
+- Keep AGENTS.md ≤80 lines
+- Update ecosystem.md for new Tier 1 links
+
+**Step 4: SCRIPT - Re-validate**
+```bash
+bash "$SKILL_DIR/scripts/validate.sh" "$REPO_PATH/agentic"
+```
+
+Loop continues until:
+- ✅ No changes detected AND validation passes → SUCCESS
+- ❌ Same issues 3x → STUCK
+- ⚠️ Max 10 iterations → TIMEOUT
 
 ## Success Output
 
@@ -245,7 +363,6 @@ Next Steps:
 ## Related Documentation
 
 - [Tier 1 Hub](https://github.com/openshift/enhancements/tree/master/agentic)
-- [Two-Tier Architecture](https://github.com/openshift/enhancements/blob/master/agentic/TWO_TIER_ARCHITECTURE.md)
 - [Tier 2 Examples](https://github.com/openshift/machine-config-operator/tree/master/agentic)
 
 ---

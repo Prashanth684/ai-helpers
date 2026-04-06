@@ -52,7 +52,42 @@ Run /agentic-docs-maintainer to fix automatically
 
 ## Implementation
 
-Executes: `./agentic/agentic-docs-maintainer/verify.sh`
+When you invoke this command, Claude Code runs the verification script to check documentation compliance.
+
+### Execution Flow
+
+1. **Locate Scripts**:
+   ```bash
+   # Find the verify.sh script in the plugin cache
+   PLUGIN_DIR=$(find ~/.claude/plugins/cache -path "*/agentic-docs-maintainer/*/scripts" -type d | head -1)
+   ```
+
+2. **Run Verification**:
+   ```bash
+   # Run verification with repository root
+   REPO_ROOT="${provided_path:-$PWD}" bash "$PLUGIN_DIR/verify.sh"
+   ```
+
+3. **Report Results**:
+   - Exit 0: All checks passed ✅
+   - Exit 1: Issues found (with detailed list) ❌
+
+### What the Script Checks
+
+The `verify.sh` bash script performs 11 automated compliance checks:
+- Internal links validity
+- Index completeness
+- Official documentation references
+- Content consistency
+- File count accuracy
+- Markdown formatting
+- Entry points existence
+- Required patterns presence
+- New enhancements detection
+- Glossary completeness
+- Enhancement index freshness
+
+This command is **read-only** - no changes are made to the repository.
 
 ## See Also
 

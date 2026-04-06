@@ -7,6 +7,32 @@ model: sonnet
 
 # Agentic Docs Creator - Tier 1 Ecosystem Hub
 
+## ⚡ Quick Start - Execution Flow
+
+**READ THIS FIRST to understand the execution model:**
+
+### Two-Phase Execution
+1. **SCRIPTS** (Phase 1): Setup directories and copy templates
+   - Run `create-structure.sh` → creates directory tree
+   - Run `populate-templates.sh` → copies 2 base files (DESIGN_PHILOSOPHY.md, KNOWLEDGE_GRAPH.md)
+   
+2. **LLM** (Phase 2-9): Create all documentation
+   - You (the LLM) create ~30-40 markdown files following the templates in this SKILL.md
+   - Each phase specifies what files to create with full examples
+
+### What You DON'T Do
+- ❌ Don't manually create directories (scripts handle this)
+- ❌ Don't create DESIGN_PHILOSOPHY.md or KNOWLEDGE_GRAPH.md (scripts copy these)
+- ❌ Don't run inline bash validation commands (use validate.sh script)
+
+### What You DO
+- ✅ Call the scripts in Phase 1
+- ✅ Create all documentation files in Phase 2-7
+- ✅ Call validate.sh script in Phase 8
+- ✅ Report results in Phase 9
+
+---
+
 ## What This Skill Does
 
 Creates **Tier 1 agentic documentation** in the `openshift/enhancements` repository that serves as the ecosystem hub for ALL OpenShift components.
@@ -99,75 +125,94 @@ OpenShift is a **multi-repo ecosystem** with 60+ component repositories. Origina
 | Pattern update PRs | 60+ PRs | 1 PR | **-98%** |
 | Context budget | 650 lines | 300 lines | **-54%** |
 
+## Important: Template Pattern Usage
+
+This SKILL.md provides **2-3 full templates per category** as examples. You must use these templates as patterns and infer the structure for remaining files.
+
+**Example**: Phase 4 provides full templates for:
+- `status-conditions.md` (validation/mutation pattern)
+- `controller-runtime.md` (code-heavy technical pattern)  
+- `webhooks.md` (configuration + code pattern)
+
+When you see "**Repeat for:** `leader-election.md` - How leader election works", you should:
+1. **Infer structure** from the 3 templates above
+2. **Match the pattern type**: leader-election is similar to status-conditions (technical pattern with code examples)
+3. **Create consistent content**: Same sections (Overview, Key Concepts, Implementation, Best Practices, Examples, References)
+4. **Adapt to topic**: Replace webhook-specific content with leader-election-specific content
+
+**Quality bar**:
+- ✅ All files should have similar length and depth as the provided templates
+- ✅ All files should include code examples, tables, and best practices
+- ✅ All files should reference related OpenShift components
+- ❌ Don't create stub files with just a few lines
+- ❌ Don't skip sections that the templates include
+
+## Use Your Judgment
+
+**Important**: The file suggestions in "Repeat for" sections are **examples, not requirements**. You should:
+
+✅ **DO**:
+- Identify what's critical for the OpenShift ecosystem
+- Create files for concepts that are widely used across components
+- Document patterns that prevent duplication across repos
+- Add content that provides value to LLM agents and developers
+- Skip files if the concept is too specific or rarely used
+
+❌ **DON'T**:
+- Feel obligated to create every suggested file
+- Create files just to hit a specific count
+- Add content that duplicates what's elsewhere
+- Document every possible Kubernetes/OpenShift concept
+
+**Example**: If you determine that "nodes.md" would just duplicate basic Kubernetes documentation available elsewhere, skip it. If "route.md" is critical for OpenShift and widely referenced, create it.
+
 ## Task Execution
+
+**IMPORTANT - READ THIS FIRST:**
+
+This skill has a **two-phase execution model**:
+1. **SCRIPTS** handle setup (Phase 1-2): Directory creation, template copying
+2. **LLM** creates content (Phase 3+): All documentation files
 
 When the user invokes this skill, execute the following:
 
-### Phase 1: Assessment and Validation
+### Phase 1: Run Setup Scripts
 
-**Goal:** Verify this is openshift/enhancements and Tier 1 doesn't already exist
+**Goal:** Create directory structure and copy base templates
 
-**Actions:**
+**Actions - Run these scripts in sequence:**
+
 ```bash
-# Parse arguments to get repo path
+# Find the skill directory
+SKILL_DIR=$(find ~/.claude/plugins/cache -path "*/agentic-docs-creator" -type d | head -1)
 REPO_PATH="${provided_path:-$PWD}"
 
-# Verify this is openshift/enhancements
-if [ ! -d "$REPO_PATH/enhancements" ] || [ ! -d "$REPO_PATH/dev-guide" ]; then
-    echo "❌ ERROR: This doesn't appear to be openshift/enhancements repository"
-    echo "Expected directories: enhancements/, dev-guide/"
-    exit 1
-fi
+# Step 1: Create directory structure
+bash "$SKILL_DIR/scripts/create-structure.sh" "$REPO_PATH"
 
-# Check if /agentic already exists
-if [ -d "$REPO_PATH/agentic" ]; then
-    echo "❌ ERROR: /agentic directory already exists"
-    echo "Use agentic-docs-maintainer for maintenance instead"
-    exit 1
-fi
-
-# Verify write permissions
-if [ ! -w "$REPO_PATH" ]; then
-    echo "❌ ERROR: No write permission to $REPO_PATH"
-    exit 1
-fi
-
-echo "✅ Repository verified: openshift/enhancements"
-echo "✅ Ready to create Tier 1 structure"
+# Step 2: Populate base templates
+bash "$SKILL_DIR/scripts/populate-templates.sh" "$REPO_PATH"
 ```
 
-**Output:** Confirmation that prerequisites are met
+**What the scripts do:**
+- `create-structure.sh`: 
+  - Validates this is openshift/enhancements repository
+  - Checks /agentic directory doesn't exist
+  - Creates directory tree: platform/, practices/, domain/, decisions/, workflows/, references/
+  
+- `populate-templates.sh`:
+  - Copies 2 pre-written template files:
+    - `DESIGN_PHILOSOPHY.md` (~400 lines)
+    - `KNOWLEDGE_GRAPH.md` (~300 lines)
 
-### Phase 2: Create Directory Structure
-
-**Goal:** Set up Tier 1 directory structure
-
-**Actions:**
-```bash
-cd "$REPO_PATH"
-
-# Create main structure
-mkdir -p agentic/{platform,practices,domain,decisions,workflows,references}
-
-# Create platform subdirectories
-mkdir -p agentic/platform/{operator-patterns,openshift-specifics}
-
-# Create practices subdirectories
-mkdir -p agentic/practices/{testing,security,reliability,development}
-
-# Create domain subdirectories
-mkdir -p agentic/domain/{kubernetes,openshift}
-
-echo "✅ Directory structure created"
-```
-
-**Expected structure:**
+**Expected structure after scripts:**
 ```
 enhancements/
 ├── enhancements/        [EXISTING - keep as-is]
 ├── dev-guide/           [EXISTING - keep as-is]
 └── agentic/             [NEW]
-    ├── OPENSHIFT_AGENTS.md
+    ├── DESIGN_PHILOSOPHY.md      [Created by script]
+    ├── KNOWLEDGE_GRAPH.md        [Created by script]
     ├── platform/
     │   ├── operator-patterns/
     │   └── openshift-specifics/
@@ -184,7 +229,9 @@ enhancements/
     └── references/
 ```
 
-### Phase 3: Create Master Entry Point
+**After scripts complete:** You (the LLM) create all remaining documentation starting with Phase 2.
+
+### Phase 2: Create Master Entry Point
 
 **Goal:** Create OPENSHIFT_AGENTS.md (~150-170 lines)
 
@@ -270,7 +317,7 @@ wc -l agentic/OPENSHIFT_AGENTS.md
 # Target: 150-170 lines
 ```
 
-### Phase 4: Create Platform Patterns
+### Phase 3: Create Platform Patterns
 
 **Goal:** Document operator patterns used across all repos
 
@@ -424,16 +471,175 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 - **Operator Patterns**: [index.md](./index.md)
 ```
 
-**Repeat for:**
-- `leader-election.md` - How leader election works, library-go usage
-- `rbac-patterns.md` - ServiceAccount design, Role/ClusterRole patterns
-- `finalizers.md` - Resource cleanup patterns
-- `webhooks.md` - Admission controller webhooks
-- `owner-references.md` - Resource ownership and garbage collection
-- `upgrade-strategies.md` - Rolling updates, version skew
-- `must-gather.md` - Diagnostic data collection pattern
+#### 4.3: `platform/operator-patterns/webhooks.md`
 
-#### 4.3: Create `platform/operator-patterns/index.md`
+```markdown
+# Webhooks Pattern
+
+**Category**: Platform Pattern  
+**Applies To**: Operators needing admission control  
+**Last Updated**: YYYY-MM-DD  
+
+## Overview
+
+Webhooks allow operators to validate or mutate resources before they're persisted in etcd.
+
+## Types
+
+| Type | Purpose | When to Use |
+|------|---------|-------------|
+| Validating | Reject invalid resources | Enforce business rules, schema validation |
+| Mutating | Modify resources before storage | Set defaults, inject sidecars |
+
+## Implementation
+
+### Validating Webhook
+
+```go
+import (
+    "context"
+    "net/http"
+    "sigs.k8s.io/controller-runtime/pkg/webhook/admission"
+)
+
+type MyResourceValidator struct {
+    decoder *admission.Decoder
+}
+
+func (v *MyResourceValidator) Handle(ctx context.Context, req admission.Request) admission.Response {
+    obj := &MyResource{}
+    if err := v.decoder.Decode(req, obj); err != nil {
+        return admission.Errored(http.StatusBadRequest, err)
+    }
+    
+    // Validate
+    if obj.Spec.Replicas < 1 {
+        return admission.Denied("replicas must be >= 1")
+    }
+    
+    return admission.Allowed("")
+}
+```
+
+### Mutating Webhook
+
+```go
+func (m *MyResourceMutator) Handle(ctx context.Context, req admission.Request) admission.Response {
+    obj := &MyResource{}
+    if err := m.decoder.Decode(req, obj); err != nil {
+        return admission.Errored(http.StatusBadRequest, err)
+    }
+    
+    // Set defaults
+    if obj.Spec.Replicas == 0 {
+        obj.Spec.Replicas = 3
+    }
+    
+    marshaledObj, err := json.Marshal(obj)
+    if err != nil {
+        return admission.Errored(http.StatusInternalServerError, err)
+    }
+    
+    return admission.PatchResponseFromRaw(req.Object.Raw, marshaledObj)
+}
+```
+
+## Configuration
+
+### WebhookConfiguration
+
+```yaml
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: myresource-validator
+webhooks:
+- name: myresource.openshift.io
+  clientConfig:
+    service:
+      name: my-operator-webhook
+      namespace: openshift-my-operator
+      path: /validate-myresource
+  rules:
+  - apiGroups: ["myapi.openshift.io"]
+    apiVersions: ["v1"]
+    operations: ["CREATE", "UPDATE"]
+    resources: ["myresources"]
+  sideEffects: None
+  admissionReviewVersions: ["v1"]
+```
+
+## Best Practices
+
+1. **Fail open on errors**: Use `failurePolicy: Ignore` for non-critical validation
+2. **Short timeouts**: Default 10s is often too long, use 2-3s
+3. **Avoid side effects**: Webhooks should be idempotent
+4. **Use object selectors**: Limit webhook scope to relevant objects
+5. **Handle DELETE carefully**: Old object may not pass current validation
+
+## Common Patterns
+
+### Version-Specific Validation
+
+```go
+func (v *Validator) validateV1(obj *MyResourceV1) error {
+    // v1-specific validation
+}
+
+func (v *Validator) validateV2(obj *MyResourceV2) error {
+    // v2-specific validation
+}
+```
+
+### Namespace-Aware Mutation
+
+```go
+if obj.Namespace == "openshift-monitoring" {
+    // Apply monitoring-specific defaults
+    obj.Spec.MonitoringEnabled = true
+}
+```
+
+## Examples
+
+| Component | Webhook Type | Purpose |
+|-----------|-------------|---------|
+| machine-api-operator | Validating | Prevent invalid machine configurations |
+| cluster-network-operator | Mutating | Inject network configuration defaults |
+| console-operator | Validating | Ensure console extensions are valid |
+
+## Debugging
+
+```bash
+# Check webhook configuration
+oc get validatingwebhookconfigurations
+oc get mutatingwebhookconfigurations
+
+# View webhook logs
+oc logs -n openshift-my-operator deployment/my-operator-webhook
+
+# Test webhook locally
+curl -k -X POST https://localhost:9443/validate-myresource \
+  -H "Content-Type: application/json" \
+  -d @admission-request.json
+```
+
+## References
+
+- **K8s Admission Controllers**: https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/
+- **controller-runtime Webhooks**: https://book.kubebuilder.io/cronjob-tutorial/webhook-implementation.html
+- **OpenShift Webhooks**: [webhook-best-practices.md](../../practices/development/webhook-best-practices.md)
+```
+
+**Repeat for** (follow the structure and patterns from status-conditions.md, controller-runtime.md, and webhooks.md above):
+- `leader-election.md` - How leader election works, library-go usage, HA patterns
+- `rbac-patterns.md` - ServiceAccount design, Role/ClusterRole patterns, least privilege
+- `finalizers.md` - Resource cleanup patterns, deletion flow, common pitfalls
+- `owner-references.md` - Resource ownership, garbage collection, cascade deletion
+- `upgrade-strategies.md` - Rolling updates, version skew, upgrade ordering
+- `must-gather.md` - Diagnostic data collection pattern, what to include
+
+#### 4.4: Create `platform/operator-patterns/index.md`
 
 ```markdown
 # Operator Patterns Index
@@ -469,7 +675,7 @@ All ClusterOperators should follow these patterns unless there's a documented re
 - [Example Implementations](../../references/repo-index.md)
 ```
 
-### Phase 5: Create Engineering Practices
+### Phase 4: Create Engineering Practices
 
 **Goal:** Document testing/security/reliability practices
 
@@ -734,20 +940,513 @@ See [ci-integration.md](./ci-integration.md) for details.
 - **Ginkgo**: https://onsi.github.io/ginkgo/
 ```
 
-**Repeat for:**
-- `practices/testing/ci-integration.md` - Prow and OpenShift CI
-- `practices/testing/test-flake-policy.md` - Flake definition, quarantine
-- `practices/security/threat-modeling.md` - STRIDE framework
-- `practices/security/rbac-guidelines.md` - Least privilege, role design
-- `practices/security/secrets-management.md` - Secret rotation, avoiding logs
-- `practices/reliability/slo-framework.md` - SLO definition, error budgets
-- `practices/reliability/observability.md` - Metrics, logging, tracing
-- `practices/reliability/alerting.md` - Alert design, runbooks
-- `practices/development/git-workflow.md` - Branching, commit messages
-- `practices/development/code-review.md` - LGTM/approval process
-- `practices/development/api-evolution.md` - Versioning, deprecation
+#### 5.3: `practices/security/threat-modeling.md`
 
-### Phase 6: Create Domain Concepts
+```markdown
+# Threat Modeling
+
+**Category**: Engineering Practice  
+**Applies To**: All OpenShift components  
+**Last Updated**: YYYY-MM-DD  
+
+## Overview
+
+Use the STRIDE framework to identify security threats during design and implementation.
+
+## STRIDE Framework
+
+| Threat | Question | Example |
+|--------|----------|---------|
+| **S**poofing | Can an attacker impersonate? | Fake ServiceAccount tokens |
+| **T**ampering | Can data be modified? | ConfigMap injection |
+| **R**epudiation | Can actions be denied? | Missing audit logs |
+| **I**nformation Disclosure | Can data be leaked? | Secrets in logs |
+| **D**enial of Service | Can availability be disrupted? | Resource exhaustion |
+| **E**levation of Privilege | Can permissions be escalated? | RBAC bypass |
+
+## When to Apply
+
+- **Design phase**: New features, APIs, controllers
+- **Code review**: Changes affecting security boundaries
+- **Incident response**: Understanding attack vectors
+
+## Process
+
+### 1. Identify Assets
+
+```markdown
+## Assets
+- Cluster credentials (etcd encryption keys)
+- User data (PersistentVolumes)
+- Control plane availability
+```
+
+### 2. Map Data Flows
+
+```
+User → API Server → Operator → Managed Resource
+  ↓         ↓           ↓            ↓
+ RBAC    Webhook    Leader       Secrets
+         Validation  Election
+```
+
+### 3. Apply STRIDE to Each Flow
+
+**Example: Operator reads Secret**
+
+| Threat | Risk | Mitigation |
+|--------|------|-----------|
+| Spoofing | Operator pod impersonated | Use ServiceAccount with limited RBAC |
+| Tampering | Secret modified in transit | TLS between components |
+| Information Disclosure | Secret logged | Sanitize logs, avoid printing secrets |
+| Elevation of Privilege | Operator gains cluster-admin | Least privilege RBAC |
+
+### 4. Document Mitigations
+
+```go
+// Mitigation: Information Disclosure
+// Never log the entire secret
+log.Info("Processing secret", "name", secret.Name) // OK
+log.Info("Secret data", "data", secret.Data)       // NEVER
+```
+
+## Common Threats in OpenShift
+
+### Spoofing: ServiceAccount Token Theft
+
+**Attack**: Attacker gains access to pod, steals `/var/run/secrets/kubernetes.io/serviceaccount/token`
+
+**Mitigations**:
+- Least privilege RBAC
+- Short-lived tokens (TokenRequest API)
+- Audit ServiceAccount usage
+
+### Tampering: Malicious Admission Webhooks
+
+**Attack**: Attacker deploys webhook that modifies resources
+
+**Mitigations**:
+- Restrict webhook creation (RBAC)
+- Validate webhook configurations
+- Use `failurePolicy: Fail` for critical webhooks
+
+### Information Disclosure: Secrets in Container Images
+
+**Attack**: Credentials hardcoded in images
+
+**Mitigations**:
+- Mount secrets as volumes
+- Use external secret managers
+- Scan images for secrets (pre-commit hooks)
+
+## OpenShift-Specific Considerations
+
+### Multi-Tenancy
+
+**Threat**: Tenant A accesses Tenant B's resources
+
+**Mitigations**:
+- Network policies (isolate namespaces)
+- RBAC (namespace-scoped roles)
+- SCCs (prevent privileged containers)
+
+### Node Access
+
+**Threat**: Container escapes to node
+
+**Mitigations**:
+- SCCs (restrict privileged, hostPath, hostNetwork)
+- SELinux enforcement
+- Read-only root filesystems
+
+## Examples
+
+| Component | Threat Identified | Mitigation |
+|-----------|------------------|-----------|
+| console-operator | XSS in console UI | CSP headers, input sanitization |
+| machine-api-operator | Cloud credentials exposure | Short-lived credentials, credential rotation |
+| cluster-network-operator | Network policy bypass | Default-deny policies, validation webhooks |
+
+## References
+
+- **STRIDE**: https://learn.microsoft.com/en-us/azure/security/develop/threat-modeling-tool-threats
+- **OpenShift Security**: [security-guidelines.md](./security-guidelines.md)
+- **Secrets Management**: [secrets-management.md](./secrets-management.md)
+```
+
+#### 5.4: `practices/reliability/slo-framework.md`
+
+```markdown
+# SLO Framework
+
+**Category**: Engineering Practice  
+**Applies To**: All OpenShift ClusterOperators  
+**Last Updated**: YYYY-MM-DD  
+
+## Overview
+
+Service Level Objectives (SLOs) define reliability targets for OpenShift components.
+
+## Definitions
+
+| Term | Definition | Example |
+|------|-----------|---------|
+| **SLI** | Service Level Indicator (metric) | API request success rate |
+| **SLO** | Service Level Objective (target) | 99.9% of API requests succeed |
+| **SLA** | Service Level Agreement (contract) | 99.5% uptime or refund |
+| **Error Budget** | Allowed failure rate | 0.1% = ~43 minutes/month downtime |
+
+## OpenShift SLO Structure
+
+### Availability SLO
+
+```yaml
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: my-operator-slos
+spec:
+  groups:
+  - name: my-operator-availability
+    interval: 30s
+    rules:
+    - record: my_operator:availability:ratio_rate5m
+      expr: |
+        sum(rate(my_operator_reconcile_success_total[5m]))
+        /
+        sum(rate(my_operator_reconcile_total[5m]))
+    - alert: MyOperatorSLOAvailabilityBudgetBurn
+      expr: my_operator:availability:ratio_rate5m < 0.999
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "My Operator availability below SLO (current: {{ $value }})"
+```
+
+### Latency SLO
+
+```yaml
+- record: my_operator:latency:p99_rate5m
+  expr: histogram_quantile(0.99, rate(my_operator_reconcile_duration_seconds_bucket[5m]))
+
+- alert: MyOperatorSLOLatencyBudgetBurn
+  expr: my_operator:latency:p99_rate5m > 5
+  for: 5m
+  labels:
+    severity: warning
+  annotations:
+    summary: "My Operator P99 latency above SLO (current: {{ $value }}s, target: <5s)"
+```
+
+## Calculating Error Budget
+
+**Formula**: `Error Budget = (1 - SLO) × Time Window`
+
+**Example** (99.9% monthly SLO):
+```
+Error Budget = (1 - 0.999) × 30 days × 24 hours × 60 minutes
+             = 0.001 × 43,200 minutes
+             = 43.2 minutes per month
+```
+
+## Error Budget Policy
+
+### Budget Remaining > 50%
+
+- ✅ Ship new features
+- ✅ Perform experiments
+- ✅ Deploy during business hours
+
+### Budget Remaining 10-50%
+
+- ⚠️ Slow down feature velocity
+- ⚠️ Focus on reliability fixes
+- ⚠️ Require deployment approval
+
+### Budget Exhausted (<10%)
+
+- ❌ Feature freeze
+- ❌ Focus ONLY on reliability
+- ❌ Root cause analysis required
+
+## Implementation
+
+### 1. Define SLIs
+
+```go
+// Instrument code with metrics
+reconcileTotal := prometheus.NewCounterVec(
+    prometheus.CounterOpts{
+        Name: "my_operator_reconcile_total",
+        Help: "Total reconciliations",
+    },
+    []string{"result"}, // "success" or "error"
+)
+
+reconcileDuration := prometheus.NewHistogramVec(
+    prometheus.HistogramOpts{
+        Name:    "my_operator_reconcile_duration_seconds",
+        Help:    "Reconciliation duration",
+        Buckets: prometheus.DefBuckets,
+    },
+    []string{},
+)
+```
+
+### 2. Define SLOs
+
+```markdown
+## My Operator SLOs
+
+| SLO | Target | Measurement Window |
+|-----|--------|-------------------|
+| Availability | 99.9% | 30 days |
+| P99 Latency | <5s | 5 minutes |
+| Error Rate | <0.1% | 1 hour |
+```
+
+### 3. Monitor Error Budget
+
+```promql
+# Error budget consumption rate (30-day window)
+(1 - my_operator:availability:ratio_rate30d) / (1 - 0.999)
+```
+
+## Examples
+
+| Component | SLO | Error Budget Policy |
+|-----------|-----|---------------------|
+| kube-apiserver | 99.9% availability | Feature freeze if budget exhausted |
+| machine-config-operator | 99% node configuration success | Require approval for risky changes |
+| cluster-network-operator | P95 < 10s network configuration | Alert if P95 > 10s for >5min |
+
+## References
+
+- **SRE Book**: https://sre.google/sre-book/service-level-objectives/
+- **Error Budgets**: https://sre.google/workbook/error-budget-policy/
+- **OpenShift Monitoring**: [observability.md](./observability.md)
+```
+
+#### 5.5: `practices/development/git-workflow.md`
+
+```markdown
+# Git Workflow
+
+**Category**: Engineering Practice  
+**Applies To**: All OpenShift repositories  
+**Last Updated**: YYYY-MM-DD  
+
+## Overview
+
+Standard Git workflow for OpenShift development.
+
+## Branch Strategy
+
+### Main Branches
+
+```
+master (or main)
+  ↓
+release-4.16
+  ↓
+release-4.15
+  ↓
+release-4.14
+```
+
+**Rules**:
+- `master`: Active development, latest code
+- `release-X.Y`: Maintained releases, backports only
+- All changes go to `master` first, then cherry-pick to release branches
+
+### Feature Branches
+
+```
+username/feature-description
+  └─> PR to master
+```
+
+**Naming**:
+- `username/OCPBUGS-12345-fix-memory-leak`
+- `username/add-webhook-support`
+- `username/update-dependencies`
+
+## Commit Messages
+
+### Format
+
+```
+<area>: <short summary (50 chars)>
+
+<Detailed explanation (72 chars per line)>
+
+Why this change is needed.
+What it changes.
+How it was tested.
+
+Fixes: https://issues.redhat.com/browse/OCPBUGS-12345
+```
+
+### Examples
+
+**Good**:
+```
+controller: Fix memory leak in reconciliation loop
+
+The reconcile loop was not releasing watch handles, causing
+memory to grow unbounded over time.
+
+Added finalizer to clean up watches when resources are deleted.
+
+Tested by running operator for 24h with 1000 resources.
+Memory usage now stable at 100MB.
+
+Fixes: https://issues.redhat.com/browse/OCPBUGS-12345
+```
+
+**Bad**:
+```
+fix bug
+```
+
+### Commit Message Rules
+
+1. ✅ Start with lowercase area: `controller:`, `pkg/util:`, `docs:`
+2. ✅ Imperative mood: "Fix bug" not "Fixed bug"
+3. ✅ 50 char summary, 72 char body lines
+4. ✅ Reference Jira/GitHub issues
+5. ❌ Don't end summary with period
+
+## Pull Request Workflow
+
+### 1. Create Feature Branch
+
+```bash
+git checkout -b username/OCPBUGS-12345-fix-leak master
+```
+
+### 2. Make Changes
+
+```bash
+git add pkg/controller/reconcile.go
+git commit -m "controller: Fix memory leak in reconciliation loop
+
+..."
+```
+
+### 3. Push and Create PR
+
+```bash
+git push origin username/OCPBUGS-12345-fix-leak
+
+# Create PR via GitHub UI or CLI
+gh pr create --base master --head username/OCPBUGS-12345-fix-leak
+```
+
+### 4. Address Review Comments
+
+```bash
+# Make changes
+git add pkg/controller/reconcile.go
+git commit --amend  # Amend last commit
+git push --force    # Force push (safe on feature branch)
+```
+
+### 5. Merge
+
+**Options**:
+- **Squash merge**: Multiple commits → single commit (preferred for small changes)
+- **Merge commit**: Preserve commit history (preferred for large features)
+- **Rebase**: Never use (breaks cherry-pick traceability)
+
+## Cherry-Picking to Release Branches
+
+### When to Cherry-Pick
+
+- ✅ Bug fixes
+- ✅ Security patches
+- ✅ Documentation updates
+- ❌ New features (except in rare cases)
+
+### Process
+
+```bash
+# 1. Merge to master first
+# 2. After merge, cherry-pick to release branch
+
+git checkout release-4.16
+git cherry-pick <commit-sha>
+
+# If conflicts, resolve and continue
+git cherry-pick --continue
+
+# Create PR for release branch
+git push origin username/OCPBUGS-12345-fix-leak-4.16
+gh pr create --base release-4.16
+```
+
+### Cherry-Pick PR Format
+
+```
+[release-4.16] controller: Fix memory leak
+
+Cherry-pick of #123
+
+Original commit: abc123
+
+/cherry-pick release-4.15
+```
+
+## Revert Process
+
+```bash
+# Create revert commit
+git revert <commit-sha>
+
+# Create PR
+git push origin username/revert-memory-leak-fix
+gh pr create --base master
+```
+
+**Revert commit message**:
+```
+Revert "controller: Fix memory leak"
+
+This reverts commit abc123.
+
+Reason: Introduced regression in reconciliation latency.
+Breaking CI: https://prow.ci.openshift.org/...
+
+Will resubmit with fix after investigation.
+```
+
+## Examples
+
+| Repository | Branch Strategy | Merge Policy |
+|------------|----------------|--------------|
+| kubernetes/kubernetes | master + release branches | Squash for small, merge for large |
+| openshift/machine-config-operator | master + release branches | Squash preferred |
+| openshift/enhancements | master only | Squash always |
+
+## References
+
+- **OpenShift Git Workflow**: [dev-guide/git-workflow.md](../../dev-guide/git-workflow.md)
+- **Commit Message Guide**: https://www.conventionalcommits.org/
+- **Cherry-Pick Guide**: [dev-guide/cherry-picks.md](../../dev-guide/cherry-picks.md)
+```
+
+**Repeat for** (follow the structure and patterns from pyramid.md, e2e-framework.md, threat-modeling.md, slo-framework.md, and git-workflow.md above):
+- `practices/testing/ci-integration.md` - Prow and OpenShift CI integration, job configuration
+- `practices/testing/test-flake-policy.md` - Flake definition, quarantine process, fixing flakes
+- `practices/security/rbac-guidelines.md` - Least privilege, Role vs ClusterRole, ServiceAccount design
+- `practices/security/secrets-management.md` - Secret rotation, avoiding logs, external secret stores
+- `practices/reliability/observability.md` - Metrics, logging, tracing, debugging
+- `practices/reliability/alerting.md` - Alert design, runbooks, on-call best practices
+- `practices/development/code-review.md` - LGTM/approval process, review checklist
+- `practices/development/api-evolution.md` - API versioning, deprecation policy, breaking changes
+
+### Phase 5: Create Domain Concepts
 
 **Goal:** Document Kubernetes and OpenShift fundamentals
 
@@ -916,12 +1615,365 @@ See [status-conditions.md](../../platform/operator-patterns/status-conditions.md
 - **API**: https://github.com/openshift/api/blob/master/config/v1/types_cluster_operator.go
 ```
 
-**Repeat for:**
-- `domain/openshift/clusterversion.md` - ClusterVersion, upgrades
-- `domain/openshift/machine.md` - Machine API concepts
-- `domain/openshift/route.md` - Route vs Ingress
+#### 6.3: `domain/kubernetes/services.md`
 
-### Phase 7: Create Cross-Repo ADRs
+```markdown
+# Services
+
+**Type**: Kubernetes Core Concept  
+**Last Updated**: YYYY-MM-DD  
+
+## Overview
+
+Service provides stable network endpoint for accessing Pods.
+
+## Key Concepts
+
+- **Stable IP**: Service gets a cluster IP that doesn't change
+- **Load Balancing**: Distributes traffic across Pod replicas
+- **Service Discovery**: DNS name for the service (my-svc.my-namespace.svc.cluster.local)
+- **Port Mapping**: Map service port to container port
+
+## Service Types
+
+| Type | Purpose | When to Use |
+|------|---------|-------------|
+| **ClusterIP** | Internal cluster access | Most services |
+| **NodePort** | External access via node IP | Testing, legacy apps |
+| **LoadBalancer** | External load balancer | Cloud environments |
+| **ExternalName** | DNS CNAME | External service alias |
+
+## Examples
+
+### ClusterIP (Default)
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-service
+spec:
+  type: ClusterIP
+  selector:
+    app: myapp
+  ports:
+  - port: 80        # Service port
+    targetPort: 8080 # Container port
+```
+
+**Access**: `http://my-service.my-namespace.svc.cluster.local`
+
+### NodePort
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-service
+spec:
+  type: NodePort
+  selector:
+    app: myapp
+  ports:
+  - port: 80
+    targetPort: 8080
+    nodePort: 30080  # 30000-32767
+```
+
+**Access**: `http://<node-ip>:30080`
+
+### LoadBalancer
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: myapp
+  ports:
+  - port: 80
+    targetPort: 8080
+```
+
+**Access**: `http://<external-ip>` (cloud provider assigns)
+
+### Headless Service (No ClusterIP)
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-headless-service
+spec:
+  clusterIP: None
+  selector:
+    app: myapp
+  ports:
+  - port: 80
+    targetPort: 8080
+```
+
+**Use case**: StatefulSets, direct Pod access (returns Pod IPs in DNS)
+
+## Service Discovery
+
+### DNS
+
+```bash
+# Within same namespace
+curl http://my-service
+
+# Cross-namespace
+curl http://my-service.other-namespace
+
+# Fully qualified
+curl http://my-service.my-namespace.svc.cluster.local
+```
+
+### Environment Variables
+
+```bash
+# Kubernetes injects these automatically
+MY_SERVICE_SERVICE_HOST=10.96.0.10
+MY_SERVICE_SERVICE_PORT=80
+```
+
+## Session Affinity
+
+```yaml
+spec:
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 3600
+```
+
+**Use case**: Sticky sessions (same client → same Pod)
+
+## OpenShift Considerations
+
+### Routes vs Services
+
+```yaml
+# Service (internal)
+apiVersion: v1
+kind: Service
+---
+# Route (external, OpenShift-specific)
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: my-route
+spec:
+  to:
+    kind: Service
+    name: my-service
+```
+
+See [route.md](../openshift/route.md) for details.
+
+## Examples in OpenShift
+
+| Component | Service Type | Purpose |
+|-----------|-------------|---------|
+| kube-apiserver | ClusterIP + LoadBalancer | Internal + external API access |
+| console | ClusterIP + Route | Web console access |
+| prometheus | ClusterIP | Metrics collection |
+
+## References
+
+- **Kubernetes Services**: https://kubernetes.io/docs/concepts/services-networking/service/
+- **OpenShift Routes**: [route.md](../openshift/route.md)
+- **DNS**: https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/
+```
+
+#### 6.4: `domain/openshift/clusterversion.md`
+
+```markdown
+# ClusterVersion
+
+**Type**: OpenShift Platform Concept  
+**Last Updated**: YYYY-MM-DD  
+
+## Overview
+
+ClusterVersion represents the desired and current version of the OpenShift cluster.
+
+## Key Concepts
+
+- **Desired Version**: Target OpenShift version (from update payload)
+- **Current Version**: Actively running version
+- **Update Payload**: Container image with all operators and manifests
+- **Upgrade Ordering**: CVO coordinates operator upgrades
+
+## API Structure
+
+```yaml
+apiVersion: config.openshift.io/v1
+kind: ClusterVersion
+metadata:
+  name: version  # Singleton
+spec:
+  channel: stable-4.16
+  clusterID: abc123
+  desiredUpdate:
+    version: 4.16.1
+    image: quay.io/openshift-release-dev/ocp-release@sha256:...
+status:
+  desired:
+    version: 4.16.1
+    image: quay.io/openshift-release-dev/ocp-release@sha256:...
+  history:
+  - version: 4.16.1
+    state: Completed
+    startedTime: "2024-01-15T10:00:00Z"
+    completionTime: "2024-01-15T10:45:00Z"
+  - version: 4.16.0
+    state: Completed
+  conditions:
+  - type: Available
+    status: "True"
+  - type: Progressing
+    status: "False"
+  - type: Failing
+    status: "False"
+```
+
+## Upgrade Process
+
+### 1. Check Available Updates
+
+```bash
+oc get clusterversion version -o json | jq '.status.availableUpdates'
+```
+
+### 2. Trigger Upgrade
+
+```bash
+oc adm upgrade --to=4.16.1
+
+# Or edit ClusterVersion
+oc edit clusterversion version
+# Set spec.desiredUpdate.version
+```
+
+### 3. Monitor Progress
+
+```bash
+# Watch overall status
+oc get clusterversion
+
+# Watch operator status
+oc get clusteroperators
+
+# Watch CVO logs
+oc logs -n openshift-cluster-version deployment/cluster-version-operator
+```
+
+## Upgrade Ordering
+
+CVO ensures operators upgrade in the correct order:
+
+```
+1. Machine Config Operator (node updates)
+   ↓
+2. Kube API Server
+   ↓
+3. Kube Controller Manager
+   ↓
+4. Kube Scheduler
+   ↓
+5. Network Operator
+   ↓
+6. Other operators (parallel when possible)
+```
+
+## Update Channels
+
+| Channel | Purpose | When to Use |
+|---------|---------|-------------|
+| **stable-4.16** | Stable releases | Production |
+| **fast-4.16** | Early access | Testing new features |
+| **candidate-4.16** | Pre-release | Early validation |
+| **eus-4.16** | Extended Update Support | Long-term support |
+
+## Conditions
+
+| Condition | Meaning |
+|-----------|---------|
+| **Available** | Cluster is operational |
+| **Progressing** | Upgrade in progress |
+| **Failing** | Upgrade failed |
+| **RetrievedUpdates** | Update graph fetched |
+
+## Pausing Updates
+
+```yaml
+spec:
+  overrides:
+  - kind: Deployment
+    group: apps
+    name: console-operator
+    namespace: openshift-console
+    unmanaged: true  # Don't upgrade this operator
+```
+
+**Use case**: Pause specific operator during upgrade (emergency only)
+
+## Version Skew Policy
+
+- ✅ **Supported**: N → N+1 minor version (4.15 → 4.16)
+- ❌ **Not supported**: N → N+2 (4.15 → 4.17, must go through 4.16)
+- ✅ **Patch updates**: Always supported (4.16.0 → 4.16.5)
+
+## Examples
+
+### Check Current Version
+
+```bash
+oc get clusterversion version -o jsonpath='{.status.history[0].version}'
+```
+
+### Check Upgrade Status
+
+```bash
+oc get clusterversion version -o jsonpath='{.status.conditions[?(@.type=="Progressing")].message}'
+```
+
+### Force Upgrade (Override Version)
+
+```bash
+oc adm upgrade --to-image=quay.io/openshift-release-dev/ocp-release@sha256:... --force
+```
+
+**⚠️ Warning**: Only use `--force` for disaster recovery
+
+## Component Relationship
+
+| Component | Role |
+|-----------|------|
+| **cluster-version-operator** | Manages ClusterVersion, coordinates upgrades |
+| **ClusterOperators** | Report status to CVO via conditions |
+| **Update Service** | Provides update graph (Cincinnati) |
+
+## References
+
+- **CVO**: [Cluster Version Operator](../../references/components/cluster-version-operator.md)
+- **Update Process**: [upgrade-process.md](../../workflows/upgrade-process.md)
+- **Operator Patterns**: [status-conditions.md](../../platform/operator-patterns/status-conditions.md)
+- **API**: https://github.com/openshift/api/blob/master/config/v1/types_cluster_version.go
+```
+
+**Repeat for** (follow the structure and patterns from pods.md, clusteroperator.md, services.md, and clusterversion.md above):
+- `domain/kubernetes/nodes.md` - Node lifecycle, taints and tolerations, node selectors
+- `domain/kubernetes/crds.md` - Custom Resource Definitions, extending Kubernetes API
+- `domain/openshift/machine.md` - Machine API concepts, node provisioning, autoscaling
+- `domain/openshift/route.md` - Route vs Ingress, TLS termination, custom domains
+
+### Phase 6: Create Cross-Repo ADRs
 
 **Goal:** Document architectural decisions affecting multiple repos
 
@@ -1044,7 +2096,7 @@ Create ADR when:
 - Temporary experiments
 ```
 
-### Phase 8: Create Repository Index
+### Phase 7: Create Repository Index
 
 **Goal:** Create index of all component repos
 
@@ -1100,78 +2152,411 @@ Map of all OpenShift component repositories with their agentic documentation.
 - 📝 Not started
 ```
 
-### Phase 9: Validation
+**Also create** (follow repo-index.md pattern):
+- `references/index.md` - Navigation hub for all reference materials
+- `references/glossary.md` - OpenShift and Kubernetes terminology
+- `references/enhancement-index.md` - Index of all enhancements by category
+- `references/api-reference.md` - Quick reference for platform APIs
+
+### Phase 7.5: Create Index Files
+
+**Goal:** Create index/navigation files for major sections
+
+#### 8.5.1: `practices/testing/index.md`
+
+```markdown
+# Testing Practices Index
+
+**Last Updated**: YYYY-MM-DD  
+
+## Overview
+
+Testing practices for OpenShift components.
+
+## Test Types
+
+| Practice | Purpose | File |
+|----------|---------|------|
+| Testing Pyramid | Test distribution strategy | [pyramid.md](./pyramid.md) |
+| E2E Framework | openshift-tests usage | [e2e-framework.md](./e2e-framework.md) |
+| CI Integration | Prow and OpenShift CI | [ci-integration.md](./ci-integration.md) |
+| Test Flake Policy | Handling flaky tests | [test-flake-policy.md](./test-flake-policy.md) |
+
+## Quick Start
+
+1. Write unit tests first (fastest feedback)
+2. Add integration tests for component interactions
+3. Add E2E tests for critical user workflows
+4. Monitor test flakes and quarantine if needed
+
+## See Also
+
+- [Pyramid](./pyramid.md) - Distribution strategy
+- [CI Integration](./ci-integration.md) - Running tests in CI
+- [Security Testing](../security/) - Security-specific tests
+```
+
+**Also create** (similar pattern):
+- `references/index.md` - Hub for glossary, enhancement-index, api-reference, repo-index
+
+### Phase 7.6: Create Workflow Documentation
+
+**Goal:** Document common OpenShift development workflows
+
+#### 8.6.1: `workflows/enhancement-process.md`
+
+```markdown
+# Enhancement Process
+
+**Last Updated**: YYYY-MM-DD  
+
+## Overview
+
+How to propose and implement enhancements in OpenShift.
+
+## Process Flow
+
+```
+1. Proposal → 2. Review → 3. Approval → 4. Implementation → 5. Graduation
+```
+
+## 1. Write Enhancement Proposal
+
+Create `enhancements/<area>/<feature-name>.md`:
+
+```markdown
+---
+title: Feature Name
+authors:
+  - "@your-github"
+reviewers:
+  - "@reviewer1"
+approvers:
+  - "@approver1"
+creation-date: 2024-01-15
+last-updated: 2024-01-15
+status: provisional
+---
+
+# Feature Name
+
+## Summary
+
+[One paragraph summary]
+
+## Motivation
+
+### Goals
+- Goal 1
+- Goal 2
+
+### Non-Goals
+- Non-goal 1
+
+## Proposal
+
+[Detailed design]
+
+## Implementation History
+- 2024-01-15: Initial proposal
+```
+
+## 2. Submit for Review
+
+```bash
+git checkout -b enhancements/my-feature
+git add enhancements/my-area/my-feature.md
+git commit -m "Enhancement: My Feature"
+gh pr create
+```
+
+## 3. Address Review Comments
+
+Reviewers will check:
+- **Technical feasibility**
+- **Alignment with OpenShift goals**
+- **Upgrade impact**
+- **API design**
+- **User experience**
+
+## 4. Get Approval
+
+Required approvals:
+- ✅ Area owner (OWNERS file)
+- ✅ API reviewers (if adding/changing APIs)
+- ✅ Architecture review (for large changes)
+
+## 5. Implement
+
+After approval:
+```bash
+# Create implementation PRs referencing enhancement
+git commit -m "Implement my-feature
+
+Enhancement: https://github.com/openshift/enhancements/pull/123"
+```
+
+## 6. Graduate (if applicable)
+
+For features with maturity levels:
+- **Alpha**: Tech preview, may change
+- **Beta**: Supported, API stable
+- **GA**: Fully supported, production-ready
+
+## References
+
+- [Enhancement Template](https://github.com/openshift/enhancements/blob/master/TEMPLATE.md)
+- [Review Process](https://github.com/openshift/enhancements/blob/master/PROCESS.md)
+```
+
+#### 8.6.2: `workflows/implementing-features.md`
+
+```markdown
+# Implementing Features
+
+**Last Updated**: YYYY-MM-DD  
+
+## Overview
+
+Workflow for implementing approved enhancements.
+
+## Prerequisites
+
+- ✅ Enhancement proposal approved
+- ✅ Design finalized
+- ✅ API review complete (if adding APIs)
+
+## Implementation Steps
+
+### 1. Break Down Work
+
+```markdown
+## Implementation Plan
+- [ ] API changes (if any)
+- [ ] Controller implementation
+- [ ] E2E tests
+- [ ] Documentation
+- [ ] Upgrade testing
+```
+
+### 2. API Changes First
+
+If adding/changing APIs:
+
+```bash
+# 1. Update openshift/api
+cd openshift/api
+# Add CRD types
+git commit -m "API: Add MyResource type"
+
+# 2. Vendor into your repo
+cd openshift/my-operator
+go get github.com/openshift/api@latest
+go mod vendor
+```
+
+### 3. Implement Controller
+
+```go
+// pkg/controller/myresource/controller.go
+func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+    // Implementation
+}
+```
+
+### 4. Add Tests
+
+```bash
+# Unit tests
+make test-unit
+
+# Integration tests
+make test-integration
+
+# E2E tests
+make test-e2e
+```
+
+### 5. Update Documentation
+
+- Update AGENTS.md with new feature
+- Add domain docs if new concepts
+- Update exec-plans
+
+### 6. Test Upgrades
+
+```bash
+# Install old version
+openshift-install create cluster --version=4.15.0
+
+# Upgrade to new version with feature
+oc adm upgrade --to=4.16.0-rc
+```
+
+### 7. Submit PRs
+
+```bash
+# Reference enhancement in all PRs
+git commit -m "Implement my-feature controller
+
+This implements the controller for my-feature as described in:
+https://github.com/openshift/enhancements/pull/123
+
+Testing: Unit + integration + E2E tests included"
+```
+
+## Best Practices
+
+1. **Start with tests**: Write failing tests, then implement
+2. **Small PRs**: Break large features into reviewable chunks
+3. **Document as you go**: Update docs in same PR as code
+4. **Test upgrades**: Verify feature works across upgrades
+5. **Monitor CI**: Fix flakes immediately
+
+## Common Pitfalls
+
+- ❌ Implementing before approval
+- ❌ Skipping API review
+- ❌ Not testing upgrades
+- ❌ Large, monolithic PRs
+- ❌ Missing documentation
+
+## References
+
+- [Enhancement Process](./enhancement-process.md)
+- [Testing Practices](../practices/testing/)
+- [API Evolution](../practices/development/api-evolution.md)
+```
+
+### Phase 7.7: Add MachineConfig Domain Doc
+
+**Goal:** Document platform-level MachineConfig API
+
+**File:** `domain/openshift/machineconfig.md`
+
+```markdown
+# MachineConfig & MachineConfigPool
+
+**Type**: OpenShift Platform API  
+**API Group**: `machineconfiguration.openshift.io/v1`  
+**Repository**: [openshift/api](https://github.com/openshift/api)  
+**Managed By**: [machine-config-operator](https://github.com/openshift/machine-config-operator)  
+
+## Overview
+
+MachineConfig defines operating system configuration for OpenShift nodes. While managed by machine-config-operator, this is a platform-level API used across OpenShift.
+
+**Key principle**: Nodes are immutable. OS changes require reboot.
+
+## MachineConfig
+
+Defines OS configuration fragment:
+
+```yaml
+apiVersion: machineconfiguration.openshift.io/v1
+kind: MachineConfig
+metadata:
+  labels:
+    machineconfiguration.openshift.io/role: worker
+  name: 99-worker-custom
+spec:
+  kernelArguments:
+  - 'systemd.unified_cgroup_hierarchy=0'
+  config:
+    ignition:
+      version: 3.2.0
+    storage:
+      files:
+      - path: /etc/myapp/config.yaml
+        mode: 0644
+        contents:
+          source: data:,example-content
+```
+
+## MachineConfigPool
+
+Groups nodes and manages rollout:
+
+```yaml
+apiVersion: machineconfiguration.openshift.io/v1
+kind: MachineConfigPool
+metadata:
+  name: worker
+spec:
+  machineConfigSelector:
+    matchLabels:
+      machineconfiguration.openshift.io/role: worker
+  nodeSelector:
+    matchLabels:
+      node-role.kubernetes.io/worker: ""
+  maxUnavailable: 1  # Rolling update constraint
+```
+
+## When to Use
+
+- ✅ Configure OS-level settings (sysctls, kernel args)
+- ✅ Deploy files to nodes
+- ✅ Configure systemd units
+- ❌ Application configuration (use ConfigMaps)
+- ❌ Secrets (use Secrets API)
+
+## Lifecycle
+
+```
+Create MachineConfig → MCO renders for pool → Node applies → Node reboots
+```
+
+**Important**: Nodes reboot to apply changes!
+
+## Examples
+
+| Use Case | Example |
+|----------|---------|
+| Kernel tuning | Set vm.max_map_count for Elasticsearch |
+| CA certificates | Add custom CA to /etc/pki/ca-trust |
+| Network config | Configure bonding, VLANs |
+| Systemd units | Deploy custom systemd service |
+
+## Component Usage
+
+| Component | Uses MachineConfig For |
+|-----------|------------------------|
+| cluster-network-operator | Network interface configuration |
+| kubelet | Kubelet config overrides |
+| crio | Container runtime configuration |
+
+## References
+
+- **Managed By**: [machine-config-operator](../../references/repo-index.md#machine-config-operator)
+- **API Docs**: https://github.com/openshift/api/blob/master/machineconfiguration/v1/types.go
+- **Best Practices**: See MCO documentation for detailed usage
+```
+
+**Note**: MachineConfig is included in Tier 1 because it's a platform API in openshift/api used by multiple components, even though it's managed by machine-config-operator.
+
+### Phase 8: Validation
 
 **Goal:** Verify Tier 1 structure and compliance
 
-**Actions:**
+**Actions - Run validation script:**
 ```bash
-cd "$REPO_PATH/agentic"
+# Find the skill directory
+SKILL_DIR=$(find ~/.claude/plugins/cache -path "*/agentic-docs-creator" -type d | head -1)
+REPO_PATH="${provided_path:-$PWD}"
 
-# 1. Check entry point size
-AGENTS_LINES=$(wc -l < OPENSHIFT_AGENTS.md)
-if [ "$AGENTS_LINES" -gt 150 ]; then
-    echo "⚠️  OPENSHIFT_AGENTS.md is $AGENTS_LINES lines (recommended: 150-170)"
-fi
-echo "✅ OPENSHIFT_AGENTS.md: $AGENTS_LINES lines"
-
-# 2. Check all links are valid
-echo "Checking links..."
-find . -name "*.md" -exec grep -H '\[.*\](.*\.md)' {} \; > /tmp/links.txt
-# TODO: Validate each link exists
-
-# 3. Check no component-specific content
-if grep -r "machine-config-operator\|MCO-specific\|installer-specific" . | grep -v "repo-index.md" | grep -v "Examples"; then
-    echo "⚠️  WARNING: Found component-specific content in Tier 1"
-    echo "   Tier 1 should only contain cross-repo knowledge"
-fi
-
-# 4. Verify structure
-for dir in platform practices domain decisions workflows references; do
-    if [ ! -d "$dir" ]; then
-        echo "❌ Missing required directory: $dir"
-        exit 1
-    fi
-done
-echo "✅ All required directories present"
-
-# 5. Check required files
-REQUIRED_FILES=(
-    "OPENSHIFT_AGENTS.md"
-    "platform/operator-patterns/index.md"
-    "platform/operator-patterns/status-conditions.md"
-    "platform/operator-patterns/controller-runtime.md"
-    "practices/testing/pyramid.md"
-    "practices/testing/e2e-framework.md"
-    "domain/kubernetes/pods.md"
-    "domain/openshift/clusteroperator.md"
-    "decisions/index.md"
-    "references/repo-index.md"
-)
-
-for file in "${REQUIRED_FILES[@]}"; do
-    if [ ! -f "$file" ]; then
-        echo "❌ Missing required file: $file"
-        exit 1
-    fi
-done
-echo "✅ All required files present"
-
-echo ""
-echo "=================================="
-echo "✅ Tier 1 Validation Complete"
-echo "=================================="
-echo "OPENSHIFT_AGENTS.md: $AGENTS_LINES lines"
-echo "Structure: Complete"
-echo "Links: (manual check needed)"
-echo ""
-echo "Next steps:"
-echo "1. Review created documentation"
-echo "2. Create git commit"
-echo "3. Create component Tier 2 docs with agentic-docs-tier2 skill"
+# Run validation
+bash "$SKILL_DIR/scripts/validate.sh" "$REPO_PATH"
 ```
 
-### Phase 10: Report Results
+**What the script checks:**
+- OPENSHIFT_AGENTS.md exists and is ~150-170 lines
+- All required directories present
+- All required files exist
+- No component-specific content in Tier 1
+- Links are valid
+- Structure complies with SPECIFICATION.md
+
+### Phase 9: Report Results
 
 **Goal:** Summarize what was created
 

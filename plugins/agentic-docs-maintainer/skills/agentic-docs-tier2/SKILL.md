@@ -7,6 +7,33 @@ model: sonnet
 
 # Agentic Docs Tier 2 - Component Repository Documentation
 
+## ⚡ Quick Start - Execution Flow
+
+**READ THIS FIRST to understand the execution model:**
+
+### Two-Phase Execution
+1. **SCRIPT** (Phase 2): Create directory structure
+   - Run `create-structure.sh` → creates lean directory tree optimized for Tier 2
+   
+2. **LLM** (Phase 3-9): Create lean documentation
+   - You (the LLM) create component-specific docs (AGENTS.md, domain/, architecture/, etc.)
+   - Each phase specifies what files to create
+   - IMPORTANT: Keep files LEAN - link to Tier 1 for generic patterns
+
+### What You DON'T Do
+- ❌ Don't manually create directories (script handles this)
+- ❌ Don't duplicate Tier 1 content (generic patterns, testing pyramid, etc.)
+- ❌ Don't run inline bash commands (use scripts)
+
+### What You DO
+- ✅ Assess component in Phase 1 (understand what the component does)
+- ✅ Call create-structure.sh in Phase 2
+- ✅ Create lean component-specific docs in Phase 3-7
+- ✅ Call validate.sh in Phase 7
+- ✅ Report results in Phase 9
+
+---
+
 ## What This Skill Does
 
 Creates and maintains **lean** agentic documentation in OpenShift component repositories that:
@@ -343,33 +370,21 @@ done
 
 **Goal:** Create directory structure optimized for Tier 2
 
-**Actions:**
+**Actions - Run structure script:**
 ```bash
-REPO_ROOT="${REPO_PATH:-$(pwd)}"
-cd "$REPO_ROOT"
+# Find the skill directory
+SKILL_DIR=$(find ~/.claude/plugins/cache -path "*/agentic-docs-tier2" -type d | head -1)
+REPO_PATH="${provided_path:-$PWD}"
 
-# Create Tier 2 lean structure
-mkdir -p agentic/{domain,architecture,decisions,exec-plans/{active,completed},references,scripts}
-
-# Create index files
-for dir in domain architecture decisions references; do
-    touch "agentic/$dir/index.md"
-done
-
-# Create required files
-touch AGENTS.md
-touch ARCHITECTURE.md
-touch "agentic/exec-plans/template.md"
-touch "agentic/exec-plans/tech-debt-tracker.md"
-touch "agentic/references/ecosystem.md"
-
-# Create component-specific guides (LEAN versions)
-COMPONENT_NAME=$(basename "$REPO_ROOT")
-touch "agentic/${COMPONENT_NAME}_DEVELOPMENT.md"
-touch "agentic/${COMPONENT_NAME}_TESTING.md"
-
-echo "✅ Tier 2 structure created"
+# Create lean Tier 2 structure
+bash "$SKILL_DIR/scripts/create-structure.sh" "$REPO_PATH"
 ```
+
+**What the script does:**
+- Verifies this is an OpenShift component repo (checks go.mod)
+- Creates lean directory tree: domain/, architecture/, decisions/, exec-plans/, references/
+- Creates skeleton files: AGENTS.md, ARCHITECTURE.md, index.md files
+- Creates component-specific guide templates
 
 **Expected structure:**
 ```
@@ -637,6 +652,212 @@ make test-e2e
 - ❌ NO E2E framework philosophy
 - ✅ Link to Tier 1 for testing practices
 
+### Phase 5.5: exec-plans for Work Tracking (Optional)
+
+**Goal:** Document how to use exec-plans for tracking active features (optional but recommended)
+
+**What exec-plans are:**
+- Living documents that track in-progress features/enhancements
+- Move from `active/` to `completed/` when done
+- Link to enhancement proposals
+- Component-specific implementation plans
+
+**When to create:**
+- New feature being implemented
+- Enhancement proposal affecting this component
+- Major refactoring or architectural change
+- Cross-repo feature (component's portion)
+
+**Directory structure (already created in Phase 2):**
+```
+agentic/exec-plans/
+├── active/                 # Work in progress
+│   ├── feature-xyz.md
+│   └── enhancement-123.md
+├── completed/              # Archived when done
+│   └── old-feature.md
+├── template.md             # Template for new exec-plans
+└── tech-debt-tracker.md    # Track technical debt
+```
+
+**Template for exec-plans (`agentic/exec-plans/template.md`):**
+```markdown
+---
+status: active
+enhancement: <link to enhancements repo>
+owner: @username
+target_version: vX.Y
+started: YYYY-MM-DD
+---
+
+# Plan: [Feature Name]
+
+## Goal
+[What we're building - component-specific scope]
+
+## Context
+See [enhancement](link) for overall design.
+This plan covers ONLY [COMPONENT]-specific implementation.
+
+## Related Components
+[Other repos involved, if cross-repo feature]
+
+## Implementation Status
+- [ ] Design review
+- [ ] API changes
+- [ ] Controller implementation
+- [ ] Unit tests
+- [ ] Integration tests
+- [ ] E2E tests
+- [ ] Documentation
+- [ ] Performance validation
+
+## Blockers
+[Any blockers or dependencies]
+
+## Component-Specific Considerations
+[What's unique about implementing this in THIS component]
+
+## Testing Strategy
+[Component-specific testing approach]
+
+## Rollout Plan
+[How this will be deployed/enabled]
+
+## Links
+- Enhancement: [link]
+- Jira: [link]
+- Related ADRs: [link]
+```
+
+**Template for tech debt (`agentic/exec-plans/tech-debt-tracker.md`):**
+```markdown
+# [Component] Technical Debt Tracker
+
+**Last Updated**: YYYY-MM-DD
+
+## High Priority
+| Item | Impact | Effort | Owner |
+|------|--------|--------|-------|
+| [Issue] | [What it affects] | [Estimate] | [@user] |
+
+## Medium Priority
+| Item | Impact | Effort | Owner |
+|------|--------|--------|-------|
+
+## Low Priority / Future
+| Item | Impact | Effort | Owner |
+|------|--------|--------|-------|
+
+## Completed (Last 6 Months)
+| Item | Completed | PR |
+|------|-----------|-----|
+```
+
+**Workflow:**
+1. **New feature starts:**
+   ```bash
+   # Create from template
+   cp agentic/exec-plans/template.md agentic/exec-plans/active/feature-xyz.md
+   
+   # Fill in details
+   # - Link to enhancement proposal
+   # - Component-specific implementation plan
+   # - Track progress with checkboxes
+   ```
+
+2. **During implementation:**
+   ```bash
+   # Update status as you go
+   # Check off completed items
+   # Add blockers as they arise
+   # No need to commit every update - these are living docs
+   ```
+
+3. **Feature completed:**
+   ```bash
+   # Move to completed/
+   mv agentic/exec-plans/active/feature-xyz.md agentic/exec-plans/completed/
+   
+   # Update status to "completed"
+   # Add completion date
+   # Commit the move
+   ```
+
+**Important notes:**
+- **NOT required for Tier 2 compliance** - exec-plans are optional
+- **No validation enforced** - these change frequently
+- **Component teams decide** - you know your work best
+- **Living documents** - update as needed, don't worry about perfection
+
+**Example exec-plan:**
+```markdown
+---
+status: active
+enhancement: https://github.com/openshift/enhancements/blob/master/enhancements/machine-config/custom-os-images.md
+owner: @mco-team
+target_version: v4.16
+started: 2026-03-15
+---
+
+# Plan: Custom OS Images (MCO Implementation)
+
+## Goal
+Allow users to specify custom OS images for OpenShift nodes.
+
+## Context
+See [enhancement](link) for overall design.
+This plan covers MCO-specific implementation:
+- MachineConfig API extension
+- Image validation
+- Node update coordination
+
+## Related Components
+- installer (initial node images)
+- CVO (upgrade coordination)
+
+## Implementation Status
+- [x] Design review
+- [x] API changes (MachineConfig.spec.osImageURL)
+- [x] Controller implementation (pkg/controller/template/)
+- [x] Unit tests
+- [ ] Integration tests (in progress)
+- [ ] E2E tests
+- [ ] Documentation
+- [ ] Performance validation
+
+## Blockers
+- Waiting for installer integration (blocked on installer#1234)
+
+## Component-Specific Considerations
+- MCO must validate image before applying to nodes
+- Need to coordinate with MCD for image pull
+- rpm-ostree requires specific image format
+
+## Testing Strategy
+- Unit: Image URL validation logic
+- Integration: MachineConfig controller reconciliation
+- E2E: Full node update with custom image
+
+## Rollout Plan
+- v4.16-alpha: Initial implementation (TechPreview)
+- v4.16-GA: Stable after validation
+
+## Links
+- Enhancement: https://github.com/openshift/enhancements/pull/1234
+- Jira: MCO-567
+- Related ADRs: adr-0003-image-validation.md
+```
+
+**When to skip exec-plans:**
+- New repository (no active work yet)
+- Maintenance-only mode (no new features)
+- Small bug fixes (not worth tracking)
+- Your team prefers other tracking (Jira, GitHub issues, etc.)
+
+**Note on exec-plans:**
+Active repositories with ongoing work naturally have exec-plans to track features; new or stable repos don't need to create artificial ones just for the sake of having them. They're a tool for teams that find them useful, not a checklist item.
+
 ### Phase 6: Extract Component-Specific Content
 
 **Goal:** If migrating from single-tier, extract only component-specific content
@@ -683,54 +904,22 @@ fi
 
 **Goal:** Ensure Tier 2 docs are lean and link to Tier 1
 
-**Validation checks:**
+**Actions - Run validation script:**
+```bash
+# Find the skill directory
+SKILL_DIR=$(find ~/.claude/plugins/cache -path "*/agentic-docs-tier2" -type d | head -1)
+REPO_PATH="${provided_path:-$PWD}"
 
-1. **AGENTS.md length:**
-   ```bash
-   lines=$(wc -l < AGENTS.md)
-   if [ $lines -gt 80 ]; then
-       echo "❌ AGENTS.md too long: $lines lines (max 80)"
-   fi
-   ```
+# Run Tier 2 validation
+bash "$SKILL_DIR/scripts/validate.sh" "$REPO_PATH"
+```
 
-2. **No generic duplication:**
-   ```bash
-   # Forbidden patterns (belong in Tier 1):
-   FORBIDDEN=(
-       "testing pyramid"
-       "controller-runtime reconciliation"
-       "Available/Progressing/Degraded conditions"
-       "STRIDE threat model"
-       "SLO error budget"
-   )
-   
-   for pattern in "${FORBIDDEN[@]}"; do
-       if grep -ri "$pattern" agentic/; then
-           echo "❌ Found generic content: '$pattern'"
-           echo "   Should link to Tier 1 instead"
-       fi
-   done
-   ```
-
-3. **Required links to Tier 1:**
-   ```bash
-   # Must have ecosystem.md
-   if [ ! -f "agentic/references/ecosystem.md" ]; then
-       echo "❌ Missing agentic/references/ecosystem.md"
-   fi
-   
-   # Must reference Tier 1 in AGENTS.md
-   if ! grep -q "enhancements/blob/master/agentic" AGENTS.md; then
-       echo "❌ AGENTS.md doesn't link to Tier 1"
-   fi
-   ```
-
-4. **Component-specific content only:**
-   ```bash
-   # All domain concepts should be component-specific
-   # All ADRs should be component-specific
-   # All architecture docs should be component-specific
-   ```
+**What the script checks:**
+1. **AGENTS.md length**: ≤80 lines
+2. **No generic duplication**: Checks for forbidden patterns like "testing pyramid", "controller-runtime reconciliation", etc.
+3. **Required links to Tier 1**: Must have ecosystem.md and link to Tier 1 in AGENTS.md
+4. **Component-specific content only**: All domain/architecture/ADR content should be component-specific
+5. **File count and size**: Ensures docs are lean
 
 **Expected metrics:**
 - AGENTS.md: ≤80 lines (vs 143 for single-tier)

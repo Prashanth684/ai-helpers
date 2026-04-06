@@ -10,7 +10,12 @@ agentic-docs-maintainer (default)
 ```
 /agentic-docs-maintainer [--path <repo-path>]
 /agentic-docs-maintainer:fix [--path <repo-path>]
+/agentic-docs-maintainer --extract [--path <repo-path>]
 ```
+
+**Modes:**
+- **No flags** (or `:fix`) → Compliance only (fix broken links, indexes, etc.)
+- **--extract flag** → Compliance + extraction in each iteration (see below)
 
 ## Description
 Compliance mode - runs verification and autonomously fixes all issues found.
@@ -71,14 +76,72 @@ The autonomous loop:
 
 ## Implementation
 
-Executes: `./agentic/agentic-docs-maintainer/scripts/loop.sh`
+### Execution Steps (Iterative Loop)
 
-Spawns autonomous agent that:
-1. Reads current state
-2. Identifies issues from verification
-3. Makes fixes
-4. Creates git commits
-5. Iterates until done
+**Iteration 1-10:**
+
+**Step 1: SCRIPT - Run verify.sh**
+```bash
+PLUGIN_DIR=$(find ~/.claude/plugins/cache -path "*/agentic-docs-maintainer/*/scripts" -type d | head -1)
+REPO_ROOT="${provided_path:-$PWD}" bash "$PLUGIN_DIR/verify.sh"
+```
+
+What the script does:
+- Checks 11 compliance areas
+- Reports issues found
+- Exits with status 0 (pass) or 1 (fail)
+
+**Step 2: SCRIPT - Run loop.sh (if issues found)**
+```bash
+REPO_ROOT="${provided_path:-$PWD}" bash "$PLUGIN_DIR/loop.sh"
+```
+
+What the script does:
+- Creates `.ralph-task-N.md` with current issues
+- Waits for LLM intervention
+
+**Step 3: LLM - Read task and fix issues**
+
+LLM reads `.ralph-task-N.md` and executes:
+- Fix broken links → Update file paths
+- Fix incomplete indexes → Add missing references
+- Fix missing /dev-guide/ refs → Add links to official docs
+- Fix file count mismatches → Update KNOWLEDGE_GRAPH.md
+- Fix markdown formatting → Fix unclosed code blocks
+
+**Step 4: SCRIPT - Re-run verify.sh**
+
+Check if issues resolved:
+- ✅ All checks pass → SUCCESS (exit loop)
+- ↻ Issues remain → Next iteration
+- ❌ Same error 3x → STUCK (exit loop)
+- ⚠️ Max 10 iterations → TIMEOUT (exit loop)
+
+---
+
+## With --extract Flag
+
+When using `--extract` flag, the loop does BOTH compliance AND extraction:
+
+**Step 2: SCRIPT - Run loop.sh --extract**
+```bash
+REPO_ROOT="${provided_path:-$PWD}" bash "$PLUGIN_DIR/loop.sh" --extract
+```
+
+**Step 3: LLM - Read task and execute Part 1 + Part 2**
+
+Task file contains TWO parts:
+
+**Part 1: Fix Compliance Issues** (same as above)
+- Fix broken links, indexes, etc.
+
+**Part 2: Extract Knowledge from Enhancements**
+- Find recent enhancements (last 30 days)
+- Extract APIs, patterns, decisions, terminology
+- Create/update documentation
+- Update indexes
+
+Each iteration does compliance fixes FIRST, then extraction.
 
 ## See Also
 

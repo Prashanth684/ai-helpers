@@ -8,8 +8,12 @@ agentic-docs-maintainer:extract
 ## Synopsis
 ```
 /agentic-docs-maintainer:extract [--path <repo-path>]
-/agentic-docs-maintainer --extract [--path <repo-path>]
 ```
+
+**Important Distinctions:**
+- **:extract** (this command) → Extract knowledge from **Tier 1 enhancements** (creates/enriches docs)
+- **--extract** (flag to main command) → Compliance + extraction from enhancements, iterative loop
+- **:tier2-lean --extract** → Extract from **single-tier docs** to create lean Tier 2 (removes generic duplication)
 
 ## Description
 Knowledge extraction mode - scans `/enhancements/` directory for new proposals and automatically:
@@ -69,14 +73,32 @@ Running: /agentic-docs-maintainer:extract
 
 ## Implementation
 
-Executes: `./agentic/agentic-docs-maintainer/loop.sh --extract`
+### Execution Steps
 
-Spawns autonomous agent that:
-1. Runs compliance checks (fixes if needed)
-2. Scans for new enhancements (last 30 days)
-3. Extracts knowledge and creates docs
-4. Creates git commits
-5. Marks enhancements as processed
+**Step 1: SCRIPT - Run extract.sh**
+```bash
+PLUGIN_DIR=$(find ~/.claude/plugins/cache -path "*/agentic-docs-maintainer/*/scripts" -type d | head -1)
+REPO_ROOT="${provided_path:-$PWD}" bash "$PLUGIN_DIR/extract.sh"
+```
+
+What the script does:
+- Creates `.ralph-processed-enhancements.txt` (if doesn't exist)
+- Scans `enhancements/` for recent files (last 30 days)
+- Filters out already-processed enhancements
+- Creates `.ralph-extract-task.md` with detailed extraction instructions
+- Waits for LLM
+
+**Step 2: LLM - Read task and extract knowledge**
+
+LLM reads `.ralph-extract-task.md` and executes:
+- Create critical files (DESIGN_PHILOSOPHY.md, KNOWLEDGE_GRAPH.md)
+- Deepen template docs (add examples, edge cases, anti-patterns)
+- Extract from enhancements:
+  - New API types → Create domain docs
+  - Patterns (3+ enhancements) → Create pattern docs
+  - Architectural decisions → Propose ADRs (DRAFT)
+  - New terminology → Add to glossary
+- Append processed enhancements to `.ralph-processed-enhancements.txt`
 
 ## See Also
 

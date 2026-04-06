@@ -235,19 +235,44 @@ else
 fi
 echo ""
 
-# 10. Calculate documentation size (should be ~60% smaller than single-tier)
-echo "📋 [10/10] Checking documentation size..."
+# 10. Quality assessment (documentation size, navigation, exec-plans)
+echo "📋 [10/10] Quality assessment..."
 if [ -d "$AGENTIC_DIR" ]; then
+    # Calculate documentation size (should be ~60% smaller than single-tier)
     TOTAL_LINES=$(find "$AGENTIC_DIR" -name "*.md" -type f -exec wc -l {} + | tail -1 | awk '{print $1}')
     TOTAL_FILES=$(find "$AGENTIC_DIR" -name "*.md" -type f | wc -l)
 
-    echo "  ℹ️  Total: $TOTAL_FILES files, $TOTAL_LINES lines"
+    echo "  ℹ️  Documentation size: $TOTAL_FILES files, $TOTAL_LINES lines"
 
     # Warn if suspiciously large (single-tier MCO was 6000 lines, Tier 2 should be ~2500)
     if [ "$TOTAL_LINES" -gt 4000 ]; then
         record_warning "Documentation is $TOTAL_LINES lines (seems large for Tier 2 lean)"
         echo "  ⚠️  Documentation seems large - may contain generic content"
     fi
+
+    # Check AGENTS.md navigation quality
+    if [ -f "$AGENTS_FILE" ]; then
+        INTERNAL_LINKS=$(grep -c '\[.*\](./' "$AGENTS_FILE" 2>/dev/null || echo 0)
+        TIER1_LINKS=$(grep -c 'github.com/openshift/enhancements.*agentic' "$AGENTS_FILE" 2>/dev/null || echo 0)
+
+        if [ "$INTERNAL_LINKS" -lt 3 ]; then
+            echo "  ⚠️  AGENTS.md has few internal links ($INTERNAL_LINKS) - consider adding more navigation"
+        else
+            echo "  ℹ️  Navigation: $INTERNAL_LINKS internal links, $TIER1_LINKS Tier 1 references"
+        fi
+    fi
+
+    # Check for exec-plans (optional but recommended for active repos)
+    ACTIVE_PLANS=$(find "$AGENTIC_DIR/exec-plans/active" -name "*.md" -type f 2>/dev/null | wc -l)
+    COMPLETED_PLANS=$(find "$AGENTIC_DIR/exec-plans/completed" -name "*.md" -type f 2>/dev/null | wc -l)
+
+    if [ "$ACTIVE_PLANS" -gt 0 ] || [ "$COMPLETED_PLANS" -gt 0 ]; then
+        echo "  ℹ️  exec-plans: $ACTIVE_PLANS active, $COMPLETED_PLANS completed"
+    else
+        echo "  ℹ️  No exec-plans found (optional - add if tracking active features)"
+    fi
+
+    echo "  ✅ Quality assessment complete"
 fi
 echo ""
 

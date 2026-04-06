@@ -220,17 +220,48 @@ MachineConfig is how MCO manages node configuration...
 
 ## Implementation
 
-Executes the agentic-docs-creator skill with the following phases:
+### Execution Steps
 
-1. **Assessment**: Verify openshift/enhancements, check /agentic doesn't exist
-2. **Structure**: Create directory tree
-3. **Entry Point**: Create OPENSHIFT_AGENTS.md (~150-170 lines)
-4. **Platform Patterns**: Document operator patterns
-5. **Practices**: Document testing, security, reliability, development
-6. **Domain Concepts**: Document K8s and OpenShift fundamentals
-7. **ADRs**: Create cross-repo architectural decision records
-8. **Repository Index**: Map all OpenShift components
-9. **Validation**: Check compliance with Tier 1 requirements
+**Step 1: SCRIPT - Create structure**
+```bash
+SKILL_DIR=$(find ~/.claude/plugins/cache -path "*/agentic-docs-creator" -type d | head -1)
+bash "$SKILL_DIR/scripts/create-structure.sh" "$REPO_PATH"
+```
+
+What the script does:
+- Creates empty directory structure (platform/, practices/, domain/, decisions/, references/)
+
+**Step 2: SCRIPT - Populate base templates**
+```bash
+bash "$SKILL_DIR/scripts/populate-templates.sh" "$REPO_PATH"
+```
+
+What the script does:
+- Copies 2 pre-written template files (DESIGN_PHILOSOPHY.md, KNOWLEDGE_GRAPH.md)
+
+**Step 3: LLM - Create all documentation**
+
+LLM reads SKILL.md and creates documentation using templates:
+- **Phase 2**: OPENSHIFT_AGENTS.md (~150-170 lines)
+- **Phase 3**: Platform patterns (operator patterns, OpenShift specifics)
+- **Phase 4**: Engineering practices (testing, security, reliability, development)
+- **Phase 5**: Domain concepts (critical Kubernetes and OpenShift APIs)
+- **Phase 6**: Cross-repo ADRs (architectural decisions affecting multiple repos)
+- **Phase 7**: Reference materials (repo index, glossary, enhancement index, API reference)
+- **Phase 7.5**: Index files for major sections
+- **Phase 7.6**: Workflow documentation (enhancement process, implementation)
+- **Phase 7.7**: MachineConfig platform API documentation
+
+The LLM identifies what's critical based on OpenShift ecosystem needs.
+
+**Step 4: SCRIPT - Validate**
+```bash
+bash "$SKILL_DIR/scripts/validate.sh" "$REPO_PATH/agentic"
+```
+
+What the script does:
+- Checks compliance against SPECIFICATION.md
+- Reports validation results
 
 ## Success Output
 
@@ -242,16 +273,19 @@ Location: /agentic
 
 Structure Created:
   - OPENSHIFT_AGENTS.md: 167 lines (target: ~150-170) ✅
-  - Platform patterns: 9 files
-  - Practices: 13 files
-  - Domain concepts: 9 files
-  - Cross-repo ADRs: 3 files
-  - Repository index: 1 file
+  - Platform patterns (operator patterns, OpenShift specifics)
+  - Engineering practices (testing, security, reliability, development)
+  - Domain concepts (Kubernetes and OpenShift platform APIs)
+  - Cross-repo ADRs (architectural decisions)
+  - Reference materials (repo index, glossary, enhancement index, API reference)
+  - Workflow documentation (enhancement process, implementation)
+  - Index files for major sections
 
 Validation:
   ✅ OPENSHIFT_AGENTS.md ~150-170 lines
   ✅ All required directories present
   ✅ No component-specific content detected
+  ✅ Critical platform patterns and practices documented
   ✅ Repository index created
 
 Next Steps:
@@ -270,7 +304,6 @@ Next Steps:
 
 ## Related Documentation
 
-- [Two-Tier Architecture](https://github.com/openshift/enhancements/blob/master/agentic/TWO_TIER_ARCHITECTURE.md)
 - [Tier 1 Examples](https://github.com/openshift/enhancements/tree/master/agentic)
 - [Component Tier 2 Examples](https://github.com/openshift/machine-config-operator/tree/master/agentic)
 
