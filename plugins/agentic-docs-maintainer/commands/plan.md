@@ -11,9 +11,9 @@ agentic-docs-maintainer:plan
 ```
 
 ## Description
-Breaks down an approved feature specification into ordered, implementable tasks following OpenShift development practices. Creates dependency graph, vertical slices with checkpoints, and timeline estimate.
+Breaks down an approved feature specification into ordered, implementable tasks. Creates tasks with clear acceptance criteria, dependencies, and verification steps.
 
-**Key Innovation**: Uses `/fetch` to retrieve component architecture and implementation workflows before creating the task breakdown.
+**Approach**: Read the spec's implementation plan (Section 8), then break it into concrete tasks that match your feature type.
 
 ## Arguments
 
@@ -22,53 +22,109 @@ Breaks down an approved feature specification into ordered, implementable tasks 
 
 ## When to Use
 
-- After `/spec` is approved and ready for implementation
-- Breaking down a large feature into manageable tasks
-- Planning implementation timeline and dependencies
-- Need structured approach for multi-week projects
+✅ **Use for:**
+- Approved specs ready for implementation
+- Features needing ordered task breakdown
+- Multi-week projects requiring checkpoints
 
-**When NOT to use**:
+❌ **Don't use for:**
 - Spec not yet approved
-- Simple one-file changes
-- Bug fixes that don't need planning
+- Simple one-file changes (just implement directly)
+- Changes already clear from enhancement alone
 
 ## How It Works
 
-### Phase 0: Automatic Pattern Retrieval
+### Phase 0: Read Specification
 
-```bash
-# Automatically fetches implementation guidance
-📚 Fetching OpenShift implementation patterns...
-📡 Fetching component architecture...
-🔍 Finding similar implementations...
+Reads SPEC-*.md to extract:
+- Feature type (operator? CLI? library? bugfix?)
+- Implementation phases from Section 8
+- Components involved
+- Dependencies
+
+### Phase 1: Read Patterns
+
+Reads implementation workflow patterns:
+- `../enhancements/agentic/workflows/implementing-features.md`
+- `../enhancements/agentic/practices/development/`
+- `../{component}/agentic/` (if component specified)
+
+### Phase 2: Create Plan
+
+Breaks spec Section 8 into concrete tasks:
+- Each task: 1-2 days of work
+- Clear acceptance criteria
+- Verification command
+- Dependencies noted
+- Checkpoints at milestones
+
+### Phase 3: Approval Gate
+
+Shows plan, waits for user approval before proceeding to `/build`.
+
+## Output
+
+Creates `PLAN-{name}.md` with:
+
+**Task Structure** (adapts to feature):
+- Description (what to build)
+- Acceptance criteria (how you know it's done)
+- Verification (command to check)
+- Dependencies (what blocks this)
+- Time estimate
+
+**Checkpoints** (validation gates):
+- Placed at key milestones
+- Require manual approval before continuing
+
+**Timeline Estimate**:
+- Week-by-week breakdown
+- Risk assessment
+
+## Example Task Patterns
+
+**For operator features**, tasks often include:
+```
+Task 1: Define API types
+Task 2: Basic controller reconciliation
+Checkpoint: MVP works
+Task 3: Status conditions
+Task 4: Validation (webhooks or controller)
+Task 5: Integration tests
+Checkpoint: Integration passes
+Task 6: E2E tests
+Task 7: Metrics and must-gather
+Checkpoint: Ready for PR
 ```
 
-### What Gets Fetched
+**For CLI features**, tasks often include:
+```
+Task 1: Command structure and args
+Task 2: Core functionality
+Checkpoint: Basic command works
+Task 3: Output formatting
+Task 4: Integration with existing commands
+Task 5: Unit + integration tests
+Checkpoint: Tests pass
+Task 6: Documentation
+```
 
-**Always**:
-- Implementation workflow (practices/development/implementing-features.md)
-- Git workflow (practices/development/git-workflow.md)
-- Testing pyramid (practices/testing/pyramid.md)
-- API evolution patterns (practices/development/api-evolution.md)
+**For library features**, tasks often include:
+```
+Task 1: Interface design
+Task 2: Core implementation
+Checkpoint: Basic usage works
+Task 3: Error handling
+Task 4: Examples and tests
+Checkpoint: Tests pass
+Task 5: Documentation
+```
 
-**If --component specified**:
-- Component architecture and code structure
-- Similar feature implementations
-- Component-specific patterns
-
-### Output
-
-Creates implementation plan with:
-
-1. **Dependency Analysis** - What blocks what
-2. **Vertical Slices** - 9 ordered tasks (API → MVP → Status → Validation → Integration → E2E → Observability → Docs)
-3. **Checkpoints** - 4 validation gates
-4. **Timeline Estimate** - Week-by-week breakdown
-5. **Risk Assessment** - High/Medium/Low risks with mitigations
+**Your tasks should match YOUR feature - these are examples, not templates.**
 
 ## Examples
 
-### Example 1: Simple Feature
+### Example 1: From Spec File
 
 ```bash
 /agentic-docs-maintainer:plan SPEC-webhook-validation.md
@@ -76,22 +132,26 @@ Creates implementation plan with:
 
 **What happens:**
 ```
-📚 Fetching implementation patterns...
-  ✅ practices/development/implementing-features.md
-  ✅ practices/development/git-workflow.md
-  ✅ practices/testing/pyramid.md
+📖 Reading spec...
+  ✅ Feature: Webhook validation
+  ✅ Type: Operator feature
+  ✅ Implementation phases: 4
 
-📝 Creating implementation plan...
+📚 Reading patterns...
+  ✅ implementing-features.md
+  ✅ api-evolution.md
+
+📝 Creating plan...
   ✅ PLAN-webhook-validation.md
 
-🎯 Plan created!
-  - 9 tasks defined
-  - 4 checkpoints set
-  - 5 week estimate
-  - Ready for /build
+Tasks: 7
+Checkpoints: 3
+Timeline: 4 weeks
+
+⏸️  Review gate: approve to proceed
 ```
 
-### Example 2: Component-Specific Feature
+### Example 2: Component-Specific
 
 ```bash
 /agentic-docs-maintainer:plan --component machine-config-operator
@@ -99,179 +159,84 @@ Creates implementation plan with:
 
 **What happens:**
 ```
-📚 Fetching implementation patterns...
-  ✅ practices/development/implementing-features.md
-  ✅ practices/testing/pyramid.md
+📖 Reading spec...
+  ✅ Found: SPEC-node-drain-timeout.md
 
-📡 Fetching component architecture...
+📚 Reading patterns...
+  ✅ implementing-features.md
   ✅ machine-config-operator/agentic/AGENTS.md
-  ✅ machine-config-operator/agentic/architecture/components.md
+  ✅ machine-config-operator/agentic/architecture/
 
-🔍 Finding similar implementations...
-  - cluster-network-operator: Similar reconciliation pattern
-  - machine-api-operator: Similar status reporting
-
-📝 Creating implementation plan...
+📝 Creating plan...
   ✅ PLAN-node-drain-timeout.md
-  ✅ machine-config-operator/agentic/exec-plans/active/node-drain-timeout.md
+  ✅ Tasks tailored to MCO architecture
 
-🎯 Plan created!
-  - 9 tasks tailored to MCO architecture
-  - Checkpoint gates aligned with MCO practices
+Tasks: 6
+Checkpoints: 2
+Timeline: 3 weeks
+
+⏸️  Review gate: approve to proceed
 ```
 
-## Task Structure
+## Task Best Practices
 
-Each task includes:
+**Good tasks:**
+- ✅ 1-2 days of work (small, focused)
+- ✅ Clear acceptance criteria ("tests pass", "API merged")
+- ✅ Verifiable (command to check completion)
+- ✅ Dependencies noted ("blocked by task 1")
 
-### Task Metadata
-- **Goal**: What this task delivers
-- **Time Estimate**: Days/weeks
-- **Depends On**: Prerequisites
-- **Blocks**: What depends on this
-- **Pattern Source**: Which agentic doc guided design
+**Bad tasks:**
+- ❌ >1 week of work (too big, split it)
+- ❌ Vague criteria ("make it better")
+- ❌ No verification (how do you know it's done?)
+- ❌ Missing dependencies (what must be done first?)
 
-### Work Items
-- [ ] Checklist of concrete steps
-- [ ] Files to create/modify
-- [ ] Commands to run
-- [ ] Tests to write
+## Checkpoint Best Practices
 
-### Acceptance Criteria
-- ✅ Specific, testable conditions
-- ✅ Must pass before next task
+Place checkpoints after:
+- ✅ MVP implementation (core functionality works)
+- ✅ Integration tests pass (works with other components)
+- ✅ Pre-ship validation (all tests pass, ready for PR)
 
-## Typical Task Breakdown
-
-### Task 1: API Foundation (1 week)
-- Define CRD types
-- API review
-- Merge openshift/api PR
-
-### Task 2: Vendor Dependencies (1 day)
-- Update go.mod
-- Vendor openshift/api
-
-### Task 3: Basic Reconciliation / MVP (3 days)
-- Controller skeleton
-- Reconcile() method
-- Available=True status
-- Unit tests
-
-### Task 4: Full Status Reporting (2 days)
-- Progressing condition
-- Degraded condition
-- Upgradeable condition
-- All conditions tested
-
-### Task 5: Validation & Safety (3 days)
-- Validation logic
-- Webhook (if needed)
-- Error handling
-- Validation tests
-
-### Task 6: Integration Testing (2 days)
-- Happy path test
-- Error case tests
-- Upgrade tests
-
-### Task 7: E2E Testing (3 days)
-- Feature installation test
-- User workflow test
-- Upgrade N→N+1 test
-- openshift-tests integration
-
-### Task 8: Observability (2 days)
-- Prometheus metrics
-- ServiceMonitor
-- Must-gather support
-- Alerts (if needed)
-
-### Task 9: Documentation (2 days)
-- Update AGENTS.md
-- Create exec-plan
-- Update architecture docs
-- Enhancement merged
-
-## Checkpoints
-
-**4 validation gates** spaced throughout:
-
-### Checkpoint 1: After Task 3 (MVP)
-- Feature compiles
-- Unit tests pass
-- Available=True works
-- Gate: Proceed to status reporting?
-
-### Checkpoint 2: After Task 5 (Validation)
-- All unit tests pass
-- Integration tests pass
-- Errors handled
-- Gate: Proceed to E2E?
-
-### Checkpoint 3: After Task 7 (E2E)
-- E2E tests pass in CI
-- Upgrade tests pass
-- Gate: Proceed to observability?
-
-### Checkpoint 4: After Task 9 (Docs)
-- All tests pass
-- Metrics working
-- Docs complete
-- Gate: Ready to ship?
-
-## Timeline Estimate
-
-Typical 5-week breakdown:
-
-| Week | Focus | Checkpoint |
-|------|-------|-----------|
-| 1 | API foundation | - |
-| 2 | MVP implementation | ✓ Checkpoint 1 |
-| 3 | Status + validation | ✓ Checkpoint 2 |
-| 4 | Integration + E2E | ✓ Checkpoint 3 |
-| 5 | Observability + docs | ✓ Checkpoint 4 |
-
-**Risk buffer**: +1 week for delays
+**Don't:**
+- ❌ Skip checkpoints (they catch issues early)
+- ❌ Add too many checkpoints (slows progress)
+- ❌ Put checkpoints in wrong places (should be natural milestones)
 
 ## Integration with Other Skills
 
-**Full Workflow:**
+**Full workflow:**
 ```bash
-# 1. CREATE SPEC
-/agentic-docs-maintainer:spec "feature description"
-→ Spec created with patterns
+# 1. SPEC
+/agentic-docs-maintainer:spec enhancement.md
+→ Approve spec
 
-# 2. PLAN IMPLEMENTATION (this command)
+# 2. PLAN (this command)
 /agentic-docs-maintainer:plan
-→ Tasks created with dependencies and checkpoints
+→ Approve plan
 
-# 3. BUILD INCREMENTALLY
+# 3. BUILD
 /agentic-docs-maintainer:build task-1
-→ Implement task 1 following patterns
-
 /agentic-docs-maintainer:build task-2
-→ Implement task 2 following patterns
+...
 
-# 4. TEST COMPREHENSIVELY
+# 4. TEST
 /agentic-docs-maintainer:test
-→ Verify all tests pass
 
-# 5. REVIEW FOR QUALITY
+# 5. REVIEW
 /agentic-docs-maintainer:review
-→ Check compliance with patterns
 
-# 6. SHIP SAFELY
+# 6. SHIP
 /agentic-docs-maintainer:ship
-→ Deploy with upgrade strategy
 ```
 
 ## Validation
 
-Before advancing to `/build`:
-- ✅ All 9 tasks have acceptance criteria
-- ✅ Dependencies ordered correctly  
-- ✅ Checkpoints defined
+Before `/build`:
+- ✅ All tasks have acceptance criteria
+- ✅ Dependencies ordered correctly
+- ✅ Checkpoints at key milestones
 - ✅ **Human approves plan** ← GATE
 
 ## Implementation
@@ -279,11 +244,10 @@ Before advancing to `/build`:
 Execution handled by skill at: `skills/plan/SKILL.md`
 
 **Key phases:**
-1. Phase 0: Fetch implementation patterns, component architecture
-2. Phase 1: Analyze dependencies (API → implementation → tests → docs)
-3. Phase 2: Create vertical slices (9 standard tasks)
-4. Phase 3: Add checkpoints (4 validation gates)
-5. Phase 4: Estimate timeline and risks
+1. Read spec (extract implementation phases)
+2. Read patterns (workflow and component architecture)
+3. Create tasks (break phases into verifiable tasks)
+4. Approval gate (wait for human review)
 
 ## See Also
 
@@ -293,5 +257,5 @@ Execution handled by skill at: `skills/plan/SKILL.md`
 
 ---
 
-**Pattern**: OpenShift implementation planning with vertical slicing  
-**Version**: 1.0
+**Pattern**: OpenShift implementation planning  
+**Version**: 2.0

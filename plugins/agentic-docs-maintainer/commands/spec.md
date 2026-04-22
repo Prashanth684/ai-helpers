@@ -1,5 +1,5 @@
 ---
-description: Create OpenShift feature specifications following enhancement template and agentic patterns
+description: Create OpenShift feature specifications from enhancements - architecture and decisions without code examples
 ---
 
 ## Name
@@ -7,401 +7,240 @@ agentic-docs-maintainer:spec
 
 ## Synopsis
 ```
-/agentic-docs-maintainer:spec [feature-description] [--component <name>[,<name>...]] [--feedback "text"] [--auto-approve] [--max-retries N]
+/agentic-docs-maintainer:spec [enhancement-file-or-description] [--component <name>[,<name>...]] [--auto-approve]
 ```
 
 ## Description
-Creates a comprehensive feature specification following the OpenShift enhancement template and agentic documentation patterns. Automatically fetches relevant patterns from Tier 1 (ecosystem hub) and Tier 2 (component docs) to ensure specs follow current OpenShift best practices.
+Creates a comprehensive feature specification following OpenShift enhancement template and agentic patterns. Automatically fetches relevant patterns from Tier 1 (ecosystem hub) and Tier 2 (component docs) to ensure specs follow current best practices.
 
-**Key Innovations**: 
-- **Pattern-driven**: Uses `/fetch` to retrieve OpenShift patterns before creating specs
-- **Human-in-the-loop**: Pauses at approval gates for review and iterative refinement
-- **Revision support**: Accepts feedback and regenerates until approved
-
-**Multi-component support**: For features spanning multiple operators, specify comma-separated components or let the skill auto-detect from your description.
+**Key approach**:
+- **Pattern-driven**: Fetches OpenShift patterns before creating specs
+- **Architecture-focused**: Documents decisions and data flows, not implementation code
+- **No duplication**: References enhancement file, doesn't repeat its content
+- **Plan-ready**: Provides enough detail for `/plan` to generate actionable tasks
 
 ## Arguments
 
-- `[feature-description]`: Brief description of what you're building (optional, will prompt if not provided)
+- `[enhancement-file-or-description]`: EITHER:
+  - Path to enhancement: `/path/to/enhancement.md` or URL
+    - Can be in `openshift/enhancements/enhancements/{category}/{file}.md`
+    - Or in component repo: `{component}/enhancements/{file}.md`
+    - Or in optional operator repo: `{operator}/docs/{file}.md`
+  - Feature description: `"Add webhook validation for MachineConfigPool"`
+    - Required if no enhancement file exists
 - `--component <name>[,<name>...]`: Component repository name(s)
-  - Single component: `machine-config-operator`
-  - Multiple components: `machine-config-operator,cluster-network-operator`
-  - Fetches architecture and patterns from all specified components
-- `--feedback "text"`: Revision feedback from previous attempt (optional, used for iterative refinement)
-- `--auto-approve`: Skip approval gate and proceed directly (optional, default: false)
-- `--max-retries N`: Maximum revision attempts before giving up (optional, default: 3)
+  - Single: `machine-config-operator`
+  - Multiple (comma-separated): `machine-config-operator,cluster-network-operator`
+  - Auto-detected from enhancement if file path provided
+  - Required if using feature description (no enhancement file)
+- `--auto-approve`: Skip approval gate (optional, default: pause for review)
 
 ## When to Use
 
-- Starting a new operator feature
-- Adding a new CRD or API to openshift/api
-- Making architectural changes to OpenShift components
-- Proposing enhancements in openshift/enhancements
-- Need to align with OpenShift design philosophy and patterns
+✅ **Use for:**
+- Implementing an approved enhancement
+- New operator features or CRD additions
+- Multi-component architectural changes
+- Features needing detailed architecture documentation
 
-**When NOT to use**: 
+❌ **Don't use for:**
 - Single-line fixes or typos
-- Changes that don't need a spec (already spec'd in enhancement)
+- Features fully specified in enhancement
 - Non-OpenShift projects
 
 ## How It Works
 
-### Phase 0: Automatic Pattern Retrieval
-
-```bash
-# Automatically fetches relevant patterns
-📚 Fetching OpenShift design philosophy...
-📡 Fetching webhook validation patterns...
-📡 Fetching component architecture...
-🔍 Finding similar implementations...
+### Phase 0: Read Enhancement (if provided)
+```
+📖 Reading enhancement file...
+✅ Read: Feature name, Components, APIs, Workflows
 ```
 
-### What Gets Fetched
+### Phase 1: Fetch Patterns
 
-**Always**:
-- DESIGN_PHILOSOPHY.md (core principles)
-- Relevant operator patterns (controller-runtime, status-conditions, etc.)
-- Engineering practices (testing, security, reliability)
-- ADRs (architectural constraints)
+**ALWAYS fetches Tier 1** (OpenShift guidelines from `openshift/enhancements/agentic/`):
+```
+📚 Fetching Tier 1 (OpenShift guidelines)...
+Source: openshift/enhancements/agentic/
+  ✅ DESIGN_PHILOSOPHY.md
+  ✅ operator-patterns (controller-runtime, status-conditions, webhooks)
+  ✅ practices (testing, security, reliability)
+  ✅ ADRs (architectural constraints)
+```
 
-**If --component specified**:
-- Component architecture from Tier 2
-- Component-specific patterns
-- Similar implementations in component
+**Then fetches Tier 2** (component-specific, if --component specified):
+```
+📡 Fetching Tier 2 (component-specific)...
+Source: {component}/agentic/
+  ✅ Component architecture
+  ✅ Component patterns
+  ✅ Similar implementations
+```
 
-### Output
+**This applies even if enhancement is in a component repo** - we always follow OpenShift platform guidelines.
 
-Creates a comprehensive spec with 12 sections:
+### Phase 2: Write Specification
+Creates 12-section spec:
 1. **Objective** - What, why, success criteria
-2. **Technical Design** - API, controller, validation
-3. **Testing Strategy** - Unit/integration/E2E (60/30/10)
-4. **Security** - STRIDE threat model, RBAC
-5. **Reliability & Observability** - Metrics, SLO, must-gather
+2. **Technical Design** - Architecture, API surface, data flows
+3. **Testing Strategy** - 60/30/10 pyramid, critical scenarios
+4. **Security** - STRIDE analysis, RBAC design
+5. **Reliability & Observability** - Metrics, SLOs, must-gather
 6. **Upgrade Strategy** - Version compat, migration
-7. **Dependencies** - Tier 1/Tier 2 deps, ADRs
-8. **Implementation Plan** - High-level timeline
+7. **Dependencies** - Tier 1/Tier 2, ADRs
+8. **Implementation Plan** - Phases, timeline, risks
 9. **Compliance Checklist** - Operator patterns + practices
-10. **Open Questions** - Need human input
-11. **References** - All fetched docs + official docs
+10. **Open Questions** - Needs human input
+11. **References** - Enhancement + fetched patterns
 12. **Validation Gates** - Approval checklist
 
-## Examples
-
-### Example 1: Simple Feature
-```bash
-/agentic-docs-maintainer:spec "Add webhook validation for MachineConfigPool"
+### Phase 3: Approval Gate (unless --auto-approve)
 ```
-
-**What happens:**
-```
-📚 Fetching patterns...
-  ✅ DESIGN_PHILOSOPHY.md
-  ✅ platform/operator-patterns/webhooks.md
-  ✅ practices/development/api-evolution.md
-  ✅ practices/testing/pyramid.md
-  ✅ practices/security/threat-modeling.md
-
-📝 Creating spec...
-  ✅ SPEC-machineconfig-webhook-validation.md
-
-🎯 Ready for review!
-```
-
-### Example 2: Component-Specific Feature
-```bash
-/agentic-docs-maintainer:spec "Node drain timeout configuration" \
-  --component machine-config-operator
-```
-
-**What happens:**
-```
-📚 Fetching Tier 1 patterns...
-  ✅ DESIGN_PHILOSOPHY.md
-  ✅ platform/operator-patterns/controller-runtime.md
-  ✅ platform/operator-patterns/upgrade-strategies.md
-
-📡 Fetching Tier 2 architecture...
-  ✅ machine-config-operator/agentic/AGENTS.md
-  ✅ machine-config-operator/agentic/architecture/components.md
-
-📝 Creating spec...
-  ✅ SPEC-node-drain-timeout.md
-  ✅ machine-config-operator/agentic/exec-plans/active/node-drain-timeout.md
-
-🎯 Ready for review!
-```
-
-### Example 3: Cross-Component Feature (Auto-Detected)
-```bash
-/agentic-docs-maintainer:spec "Coordinate node reboots across operators"
-```
-
-**What happens:**
-```
-🌐 Cross-component feature detected from description
-📚 Fetching Tier 1 patterns...
-  ✅ DESIGN_PHILOSOPHY.md (platform-wide coordination)
-  ✅ platform/operator-patterns/upgrade-strategies.md
-  ✅ decisions/adr-0003-cvo-upgrade-ordering.md
-
-🔍 Finding similar implementations...
-  - machine-config-operator: Node drain coordination
-  - cluster-network-operator: SDN/OVN migration coordination
-
-📝 Creating cross-component spec...
-  ✅ SPEC-node-reboot-coordination.md
-  ✅ Marked as: Tier 1 Platform (affects multiple components)
-
-🎯 Ready for enhancement PR in openshift/enhancements!
-```
-
-### Example 4: Multi-Component Feature (Explicit)
-```bash
-/agentic-docs-maintainer:spec "Network isolation during node updates" \
-  --component machine-config-operator,cluster-network-operator
-```
-
-**What happens:**
-```
-🌐 Multi-component feature: fetching from multiple repos
-📚 Fetching Tier 1 patterns...
-  ✅ DESIGN_PHILOSOPHY.md
-  ✅ platform/operator-patterns/upgrade-strategies.md
-  ✅ practices/security/network-isolation.md
-
-📡 Fetching from: machine-config-operator
-  ✅ machine-config-operator/agentic/AGENTS.md
-  ✅ machine-config-operator/agentic/architecture/node-updates.md
-
-📡 Fetching from: cluster-network-operator
-  ✅ cluster-network-operator/agentic/AGENTS.md
-  ✅ cluster-network-operator/agentic/architecture/network-policies.md
-
-📝 Creating multi-component spec...
-  ✅ SPEC-network-isolation-node-updates.md
-  ✅ Implementation spans: MCO (node cordoning) + CNO (network policies)
-
-🎯 Ready for review!
-```
-
-### Example 5: Approval Gate with Revision
-```bash
-/agentic-docs-maintainer:spec "dynamic ImageStream importMode" \
-  --component cluster-version-operator
-```
-
-**What happens:**
-```
-📚 Fetching patterns...
-  ✅ DESIGN_PHILOSOPHY.md
-  ✅ controller-runtime.md
-  ✅ cluster-version-operator/agentic/AGENTS.md
-
-📝 Creating spec...
-  ✅ SPEC-dynamic-imagestream-importmode.md (Attempt 1/3)
-
 ════════════════════════════════════════════════════════════════
   REVIEW GATE: Specification Generated
 ════════════════════════════════════════════════════════════════
 
-📄 SPEC-dynamic-imagestream-importmode.md created
+📄 SPEC-{name}.md created
 
 Please review and respond:
-  • "approve" → I'll create exec-plan
+  • "approve" → I'll proceed
   • "revise: <feedback>" → I'll regenerate
   • "abort" → I'll stop
-
-════════════════════════════════════════════════════════════════
 ```
 
-**User requests revision:**
+### Phase 4: Report
 ```
-User: revise: The technical design doesn't explain how registry-operator 
-      reads the architecture field from ClusterVersion CR. Add code examples.
-```
+✅ Specification Complete
 
-**Agent re-generates with feedback:**
-```
-=== Revision (Attempt 2/3) ===
+📄 SPEC-{name}.md
+Components: [list]
 
-Applying feedback:
-"The technical design doesn't explain how registry-operator reads..."
-
-Updated sections:
-  ✓ Technical Design > Component Interaction (lines 245-350)
-  ✓ Added code example: registry-operator ClusterVersion watcher
-  ✓ Added data flow diagram
-
-════════════════════════════════════════════════════════════════
-  REVIEW GATE: Specification Revised
-════════════════════════════════════════════════════════════════
-
-📄 SPEC-dynamic-imagestream-importmode.md revised
-
-Changes made:
-  ✓ Component interaction subsection added (105 lines)
-  ✓ Code example from registry-operator
-  ✓ Data flow diagram
-
-Please review and respond:
-  • "approve" → I'll create exec-plan
-  • "revise: <feedback>" → I'll regenerate (1 attempt left)
-  • "abort" → I'll stop
-
-════════════════════════════════════════════════════════════════
+🎯 Next: /plan SPEC-{name}.md
 ```
 
-**User approves:**
+## Output Format
+
+**Spec includes** (for good `/plan` task generation):
+- Architecture diagrams (ASCII) showing component interactions
+- API field definitions (YAML) with field descriptions
+- Data flow sequences (numbered steps)
+- Component responsibilities (what each component does)
+- Test categories and coverage targets
+- STRIDE threat analysis (table)
+- Metrics to implement (names and purposes)
+- Implementation phases (what to build in each phase)
+
+**Spec excludes** (avoids duplication and verbosity):
+- Go code examples (controllers, webhooks, tests)
+- User stories already in enhancement
+- Full motivation (links to enhancement instead)
+- Implementation details (saved for actual code)
+
+**Typical length**: Under 400 lines
+
+## Examples
+
+### Example 1: From Enhancement File
+```bash
+/agentic-docs-maintainer:spec enhancements/category/feature-name.md
 ```
-User: looks good
 
-Agent:
-✓ Specification approved
+**What happens:**
+```
+📖 Reading enhancement...
+  ✅ Feature: [extracted name]
+  ✅ Components: [auto-detected]
 
-📄 Spec Approved: SPEC-dynamic-imagestream-importmode.md
-📋 Exec-Plan Created: cluster-version-operator/agentic/exec-plans/active/dynamic-imagestream-importmode.md
+📚 Fetching patterns...
+  ✅ DESIGN_PHILOSOPHY.md
+  ✅ operator-patterns
+  ✅ practices
 
-🎯 Next Step: Run `/plan SPEC-dynamic-imagestream-importmode.md`
+📝 Creating spec...
+  ✅ SPEC-[name].md
+
+🎯 Ready for review!
 ```
 
-## Spec Structure
+### Example 2: From Description with Component
+```bash
+/agentic-docs-maintainer:spec "Feature description" --component component-name
+```
 
-The generated spec includes:
+**What happens:**
+```
+📚 Fetching patterns...
+  ✅ Tier 1 (OpenShift guidelines)
+  ✅ Tier 2 (component-specific)
 
-### 1. Objective (What & Why)
-- Feature description
-- OpenShift design principle alignment
-- User stories
-- Testable success criteria
+📝 Creating spec...
+  ✅ SPEC-[name].md
 
-### 2. Technical Design (How)
-- API changes (CRD definition, openshift/api PR)
-- Controller implementation (Reconcile() pattern)
-- Validation (webhook or in-controller)
+🎯 Ready for review!
+```
 
-### 3. Testing (Proof)
-- Testing pyramid: 60% unit, 30% integration, 10% E2E
-- Critical test scenarios
-- openshift-tests framework usage
+### Example 3: Multi-Component Feature
+```bash
+/agentic-docs-maintainer:spec "Feature description" \
+  --component component-a,component-b
+```
 
-### 4. Security (Safety)
-- STRIDE threat model
-- RBAC design (least privilege)
-- Input validation strategy
+**What happens:**
+```
+🌐 Multi-component feature detected
 
-### 5. Reliability (Operations)
-- Prometheus metrics
-- SLO definition
-- Must-gather integration
+📚 Fetching Tier 1 patterns...
+📡 Fetching from component-a...
+📡 Fetching from component-b...
 
-### 6. Upgrade (Safety)
-- Version compatibility (N → N+1)
-- Migration strategy
-- Rollback plan
+📝 Creating spec...
+  ✅ SPEC-[name].md
 
-### 7. Dependencies (Constraints)
-- Tier 1 dependencies
-- Component dependencies
-- Relevant ADRs
-
-### 8. Implementation Plan (Timeline)
-- High-level phases
-- Week-by-week breakdown
-- Risk assessment
-
-### 9. Compliance (Standards)
-- ✅ Operator patterns: 8 required checks
-- ✅ Engineering practices: 7 required checks
-- ✅ Component patterns: Component-specific checks
-
-### 10. Open Questions (Clarify)
-- Things needing human input
-- Assumptions to validate
-
-### 11. References (Sources)
-- All fetched documentation
-- Official OpenShift docs
-- Similar implementations
-
-### 12. Validation Gates (Approval)
-- Spec completeness checklist
-- Human review checklist
-
-## Benefits
-
-### For Feature Developers
-1. **Comprehensive**: Covers all aspects (API, testing, security, upgrades)
-2. **Compliant**: Follows current OpenShift patterns automatically
-3. **Guided**: Fetched patterns provide examples and best practices
-4. **Fast**: Auto-generates structure, just fill in specifics
-
-### For Reviewers
-1. **Consistent**: All specs follow same structure
-2. **Complete**: Compliance checklist ensures nothing missed
-3. **Traceable**: References show which patterns were followed
-4. **Actionable**: Clear validation gates for approval
-
-### For Platform
-1. **Quality**: Features follow documented patterns
-2. **Maintainable**: Consistent structure across components
-3. **Upgradeable**: Upgrade strategy baked in
-4. **Observable**: Metrics and must-gather required
+🎯 Ready for review!
+```
 
 ## Integration with Other Skills
 
-**Full Workflow:**
+**Full workflow:**
 ```bash
-# 1. CREATE SPEC (this command)
-/agentic-docs-maintainer:spec "feature" --component myoperator
-→ Spec created with fetched patterns
+# 1. SPEC (this command) - Architecture & decisions
+/agentic-docs-maintainer:spec enhancement.md
 
-# 2. PLAN IMPLEMENTATION
+# 2. PLAN - Break into ordered tasks
 /agentic-docs-maintainer:plan
-→ Breaks spec into ordered tasks
 
-# 3. BUILD INCREMENTALLY
+# 3. BUILD - Implement tasks
 /agentic-docs-maintainer:build
-→ Implements tasks following patterns
 
-# 4. TEST COMPREHENSIVELY
+# 4. TEST - Verify compliance
 /agentic-docs-maintainer:test
-→ Verifies compliance with testing pyramid
 
-# 5. REVIEW FOR QUALITY
+# 5. REVIEW - Check patterns
 /agentic-docs-maintainer:review
-→ Checks against operator patterns
 
-# 6. SHIP SAFELY
+# 6. SHIP - Deploy safely
 /agentic-docs-maintainer:ship
-→ Validates upgrade safety, deploys
 ```
 
-## Validation
+## What Makes a Good Spec
 
-Before advancing to `/plan`:
-- ✅ All 12 sections complete
-- ✅ Fetched patterns applied
-- ✅ Compliance checklist addressed
-- ✅ Open questions answered
-- ✅ **Human approves spec** ← GATE
+**Architecture clarity** (enables good planning):
+- ASCII diagrams show component interactions
+- Data flows are numbered sequences
+- Component responsibilities are 1-2 sentences each
+- API fields have clear descriptions
 
-## Implementation
+**Decision documentation** (not implementation):
+- Which components are involved and why
+- How components coordinate (watch patterns, status propagation)
+- What gets validated and where (webhook vs controller)
+- Which metrics to track and why
 
-Execution handled by skill at: `skills/spec/SKILL.md`
-
-**Key phases:**
-1. Phase 0: Fetch patterns (DESIGN_PHILOSOPHY + relevant patterns + component architecture)
-2. Phase 1: Clarify requirements (ask questions, surface assumptions)
-3. Phase 2: Write specification (12 sections following enhancement template)
-4. **Phase 2.5: Approval gate** (pause for review, support revision with feedback)
-5. Phase 3: Create exec-plan (if component-specific, after approval)
-6. Phase 4: Report results (spec approved and ready for /plan)
-
-**Approval Gate Behavior:**
-- **Pause**: Skill exits and waits for user response
-- **Detect intent**: Claude recognizes "approve", "revise: <feedback>", or "abort"
-- **Iterate**: On "revise", re-invokes skill with feedback parameter
-- **Max retries**: Enforces attempt limit (default: 3)
+**Enough detail for `/plan`**:
+- Implementation phases with clear deliverables
+- Test categories and what each tests
+- API changes needed (which repos)
+- Dependencies between components
 
 ## See Also
 
@@ -411,5 +250,5 @@ Execution handled by skill at: `skills/spec/SKILL.md`
 
 ---
 
-**Pattern**: OpenShift feature specification with automatic pattern retrieval  
+**Pattern**: OpenShift feature specification with pattern integration  
 **Version**: 1.0

@@ -1,5 +1,5 @@
 ---
-description: Incrementally implement tasks from plan following OpenShift operator patterns with TDD
+description: Incrementally implement tasks from plan following OpenShift patterns with tests
 ---
 
 ## Name
@@ -11,9 +11,9 @@ agentic-docs-maintainer:build
 ```
 
 ## Description
-Implements feature incrementally following OpenShift operator patterns. For each task: fetches relevant patterns, writes code following those patterns, writes tests, verifies, and commits atomically.
+Implements feature incrementally, one task at a time. For each task: reads relevant patterns, writes code, writes tests, verifies, commits atomically.
 
-**Key Innovation**: Uses `/fetch` before each task to retrieve specific implementation patterns for that task type.
+**Approach**: Let the task guide what patterns to read. Don't fetch everything - read only what you need.
 
 ## Arguments
 
@@ -22,262 +22,197 @@ Implements feature incrementally following OpenShift operator patterns. For each
 
 ## When to Use
 
-- After `/plan` is approved and implementation begins
-- Implementing each task from the plan incrementally
-- Need guidance on OpenShift patterns for specific task types
-- Want test-driven development workflow
+✅ **Use for:**
+- Implementing tasks from approved plan
+- Need pattern guidance for specific task type
+- Want incremental, verifiable progress
 
-**When NOT to use**:
+❌ **Don't use for:**
 - Plan not yet created
-- Prototyping or exploring
-- Emergency hotfixes
+- Prototyping (just code directly)
+- Emergency hotfixes (skip process)
 
 ## How It Works
 
-### For Each Task: 6-Step Workflow
+### For Each Task: 4-Phase Workflow
 
 ```
-1. Fetch Pattern   → Get implementation guidance for task type
-2. Implement       → Write code following fetched pattern
-3. Test            → Write tests (unit/integration/E2E)
-4. Verify          → Run tests + linters
-5. Commit          → Atomic commit with clear message
-6. Checkpoint      → If checkpoint task, wait for approval
+READ TASK → READ PATTERNS → IMPLEMENT → VERIFY & COMMIT
 ```
 
-### Automatic Pattern Selection
+### Phase 0: Read Task
 
-Based on task goal, automatically fetches correct pattern:
+Reads task from PLAN-*.md:
+- Description (what to build)
+- Acceptance criteria (how to verify)
+- Verification command (test to run)
 
-| Task Type | Pattern Fetched |
-|-----------|----------------|
-| API Foundation | API evolution and CRD design |
-| Basic Reconciliation | controller-runtime reconciliation |
-| Status Reporting | status-conditions implementation |
-| Validation/Webhook | webhook validation patterns |
-| Integration Tests | envtest integration testing |
-| E2E Tests | openshift-tests framework |
-| Observability | Prometheus metrics + must-gather |
-| Documentation | Tier 2 docs patterns |
+### Phase 1: Read Relevant Patterns
+
+**Based on task type, reads appropriate patterns**:
+
+- **API tasks**: Read api-evolution.md, crds.md
+- **Controller tasks**: Read controller-runtime.md, status-conditions.md
+- **Webhook tasks**: Read webhooks.md
+- **Testing tasks**: Read pyramid.md, e2e-framework.md
+- **CLI tasks**: Read component architecture, similar commands
+
+**Reads only what's needed for THIS task.**
+
+### Phase 2: Implement
+
+Writes code following patterns:
+- Uses existing code structure
+- Matches naming conventions
+- Writes tests alongside code (TDD)
+- Follows error handling patterns
+
+### Phase 3: Verify & Commit
+
+Runs verification from plan:
+```bash
+# Example verification
+make test-unit
+make test-integration
+```
+
+Creates atomic commit:
+```bash
+git commit -m "[Task X]: Brief description
+
+[Longer context]
+
+Implements: task-X from plan
+Tests: [what tests added]
+"
+```
 
 ## Examples
 
-### Example 1: Implement Task 3 (Basic Reconciliation)
+### Example 1: Implement Controller Task
 
 ```bash
-/agentic-docs-maintainer:build task-3
+/agentic-docs-maintainer:build task-2
 ```
 
 **What happens:**
 ```
-📚 Fetching pattern: controller-runtime reconciliation
-  ✅ platform/operator-patterns/controller-runtime.md
-  - Reconcile() structure
-  - Error handling (IgnoreNotFound)
-  - Status update patterns
+📖 Reading task...
+  ✅ Task 2: Basic reconciliation controller
+
+📚 Reading patterns...
+  ✅ controller-runtime.md
+  ✅ status-conditions.md
 
 📝 Implementing...
-  ✅ pkg/controller/myresource/controller.go created
-  - Reconcile() method
-  - Status updates
-  - SetupWithManager()
+  ✅ pkg/controller/reconciler.go
+  ✅ pkg/controller/reconciler_test.go
 
-📝 Testing...
-  ✅ pkg/controller/myresource/controller_test.go created
-  - TestReconcile_HappyPath
-  - TestReconcile_ResourceNotFound
-
-✅ Verification...
-  ✅ make test-unit PASS (65% coverage)
-  ✅ make verify PASS
-
-📝 Committing...
-  ✅ git commit -m "controller: Add basic reconciliation..."
-
-🚧 Checkpoint 1 reached!
-  - Feature compiles: ✅
-  - Unit tests pass: ✅
-  - Available=True: ✅
-  - Waiting for human review before Task 4
-
-✅ Task 3 complete!
-```
-
-### Example 2: Implement Task 5 (Validation)
-
-```bash
-/agentic-docs-maintainer:build task-5
-```
-
-**What happens:**
-```
-📚 Fetching pattern: webhook validation
-  ✅ platform/operator-patterns/webhooks.md
-  - ValidatingWebhookConfiguration
-  - Validation handler interface
-  - Error response format
-
-📝 Implementing...
-  ✅ pkg/webhook/validation.go created
-  - ValidateCreate()
-  - ValidateUpdate()
-  - Clear error messages
-
-📝 Testing...
-  ✅ pkg/webhook/validation_test.go created
-  - TestValidation_ValidConfig
-  - TestValidation_InvalidConfig
-
-✅ Verification...
+✅ Verifying...
   ✅ make test-unit PASS
-  ✅ make verify PASS
 
-📝 Committing...
-  ✅ git commit -m "webhook: Add validating webhook..."
+📦 Committing...
+  ✅ Committed: abc123
 
-✅ Task 5 complete! Ready for Task 6.
+🎯 Next: /build task-3
 ```
 
-## Task Implementation Guidance
+### Example 2: Implement CLI Task
 
-### Task 1: API Foundation (1 week)
-**Fetch**: API evolution patterns  
-**Create**: openshift/api PR with CRD types  
-**Test**: API generation succeeds  
-**Commit**: "api: Add MyResource CRD types"
-
-### Task 3: Basic Reconciliation (3 days)
-**Fetch**: controller-runtime reconciliation  
-**Create**: Controller with Reconcile() method  
-**Test**: Unit tests for reconcile logic  
-**Commit**: "controller: Add basic reconciliation"  
-**Checkpoint**: ✓ Checkpoint 1 (MVP)
-
-### Task 5: Validation (3 days)
-**Fetch**: webhook validation patterns  
-**Create**: Validating webhook or in-controller validation  
-**Test**: Invalid configs rejected  
-**Commit**: "webhook: Add validation"  
-**Checkpoint**: ✓ Checkpoint 2 (Core complete)
-
-### Task 7: E2E Testing (3 days)
-**Fetch**: openshift-tests framework  
-**Create**: E2E tests in test/extended/  
-**Test**: Tests pass in CI  
-**Commit**: "e2e: Add feature tests"  
-**Checkpoint**: ✓ Checkpoint 3 (Tests complete)
-
-## Anti-Patterns to Avoid
-
-| Anti-Pattern | Why Bad | Instead |
-|-------------|---------|---------|
-| Implement all at once | Hard to debug | One task at a time |
-| Skip tests | Breaks later | Write tests before done |
-| Large commits | Hard to review | Atomic per task |
-| Copy-paste code | Tech debt | Understand pattern, adapt |
-| Ignore fetched pattern | Inconsistent | Follow agentic docs |
-
-## Commit Message Format
-
-Following `practices/development/git-workflow.md`:
-
-```
-<area>: <summary>
-
-<detailed explanation>
-
-- Bullet point 1
-- Bullet point 2
-
-Follows: <agentic doc reference>
-Completes: Task X from PLAN-<feature>.md
+```bash
+/agentic-docs-maintainer:build task-1
 ```
 
-**Example:**
+**What happens:**
 ```
-controller: Add basic reconciliation for MyResource
+📖 Reading task...
+  ✅ Task 1: Add 'oc adm foo' command
 
-Implements minimal reconciliation loop following controller-runtime
-pattern.
+📚 Reading patterns...
+  ✅ ../oc/agentic/architecture/command-structure.md
 
-- Reconcile() fetches resource, reconciles state, updates status
-- Sets Available=True on successful reconciliation
-- Uses IgnoreNotFound for deleted resources
+📝 Implementing...
+  ✅ cmd/oc/cli/admin/foo/foo.go
+  ✅ cmd/oc/cli/admin/foo/foo_test.go
 
-Follows: platform/operator-patterns/controller-runtime.md
-Completes: Task 3 from PLAN-webhook-validation.md
+✅ Verifying...
+  ✅ make test-unit PASS
+  ✅ ./oc adm foo --help works
+
+📦 Committing...
+  ✅ Committed: def456
+
+🎯 Next: /build task-2
 ```
 
-## Validation
+## Checkpoints
 
-**Per Task**:
-- ✅ Tests pass (`make test-unit`, `make test-integration`)
-- ✅ Linters pass (`make verify`)
-- ✅ Code follows fetched pattern
-- ✅ Commit is atomic and well-described
-- ✅ Acceptance criteria from plan met
+When task is a checkpoint:
+```
+🚧 Checkpoint Reached!
 
-**At Checkpoints** (Tasks 3, 5, 7, 9):
-- ✅ All tasks up to checkpoint complete
-- ✅ No regressions (all tests still pass)
-- ✅ Human reviews and approves
-- 🚧 **GATE**: Must pass before next task
+Validation:
+  ✅ [Check 1 from plan]
+  ✅ [Check 2 from plan]
+
+Manual approval required before continuing.
+
+Respond:
+  ✅ "proceed" → Continue to next task
+  ✏️  "fix: <feedback>" → Address issues
+  ❌ "abort" → Stop
+```
+
+## Best Practices
+
+**Good implementation**:
+- ✅ Write tests alongside code (not after)
+- ✅ Run verification before committing
+- ✅ Atomic commits (one task = one commit)
+- ✅ Clear commit messages
+
+**Bad implementation**:
+- ❌ Write all code, then all tests
+- ❌ Skip verification
+- ❌ Big commits spanning multiple tasks
+- ❌ Vague commit messages ("wip", "fixes")
 
 ## Integration with Other Skills
 
-**Full Workflow:**
+**Full workflow:**
 ```bash
-# 1. SPEC created and approved
-/agentic-docs-maintainer:spec "feature"
+# After /plan approved
 
-# 2. PLAN created with 9 tasks
-/agentic-docs-maintainer:plan
+# Implement tasks incrementally
+/build task-1
+/build task-2
+# Checkpoint - manual approval
+/build task-3
+...
 
-# 3. BUILD incrementally (this command)
-/agentic-docs-maintainer:build task-1  # API Foundation
-/agentic-docs-maintainer:build task-2  # Vendor
-/agentic-docs-maintainer:build task-3  # Basic Reconciliation → Checkpoint 1
-# ... human approves ...
-/agentic-docs-maintainer:build task-4  # Status Reporting
-/agentic-docs-maintainer:build task-5  # Validation → Checkpoint 2
-# ... continue through task-9 ...
-
-# 4. TEST comprehensively
-/agentic-docs-maintainer:test
-
-# 5. REVIEW for quality
-/agentic-docs-maintainer:review
-
-# 6. SHIP safely
-/agentic-docs-maintainer:ship
+# After all tasks complete
+/test          # Verify comprehensive testing
+/review        # Check compliance
+/ship          # Create PR
 ```
 
-## Output
+## Implementation
 
-**Per Task**:
-```
-✅ Task X implemented
-  Files: pkg/controller/*.go, pkg/controller/*_test.go
-  Tests: 2 unit tests added
-  Pattern: platform/operator-patterns/controller-runtime.md
-  Commit: abc1234 "controller: Add basic reconciliation"
-```
+Execution handled by skill at: `skills/build/SKILL.md`
 
-**At Checkpoints**:
-```
-🚧 Checkpoint Y reached
-  Validation: 3/3 criteria met
-  Gate: Waiting for human approval
-  Next: Task Z (after approval)
-```
+**Key phases:**
+1. Read task from plan
+2. Read relevant patterns (only what's needed)
+3. Implement with tests
+4. Verify and commit
 
 ## See Also
 
-- `/agentic-docs-maintainer:plan` - Create implementation plan (previous step)
-- `/agentic-docs-maintainer:test` - Verify all tests pass (next step)
-- `/agentic-docs-maintainer:review` - Code review for compliance
+- `/agentic-docs-maintainer:plan` - Create task breakdown (previous step)
+- `/agentic-docs-maintainer:test` - Verify comprehensive testing (after all tasks)
+- `/agentic-docs-maintainer:review` - Check compliance (before ship)
 
 ---
 
-**Pattern**: Test-driven incremental implementation  
-**Version**: 1.0
+**Pattern**: OpenShift incremental implementation  
+**Version**: 2.0

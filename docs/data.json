@@ -1076,41 +1076,6 @@
           "description": "Create and maintain lean Tier 2 agentic documentation for component repos (references Tier 1)",
           "id": "agentic-docs-tier2",
           "name": "agentic-docs-tier2"
-        },
-        {
-          "description": "Intelligent retrieval agent - navigates agentic docs to find context for OpenShift questions, features, and bugs",
-          "id": "fetch",
-          "name": "fetch"
-        },
-        {
-          "description": "OpenShift feature specification - creates specs following enhancement template and agentic patterns. Use when starting a new operator feature, adding CRDs/APIs, or proposing enhancements.",
-          "id": "spec",
-          "name": "spec"
-        },
-        {
-          "description": "OpenShift implementation planning - breaks down approved spec into ordered, implementable tasks following OpenShift development practices. Use after /spec is approved.",
-          "id": "plan",
-          "name": "plan"
-        },
-        {
-          "description": "OpenShift incremental implementation - implements tasks from plan following operator patterns, with tests and verification at each step. Use after /plan is approved.",
-          "id": "build",
-          "name": "build"
-        },
-        {
-          "description": "OpenShift comprehensive testing - implements and verifies testing pyramid (60% unit, 30% integration, 10% E2E) following openshift-tests framework. Use after /build tasks complete.",
-          "id": "test",
-          "name": "test"
-        },
-        {
-          "description": "OpenShift code review - checks implementation against operator patterns, practices, and component standards. Five-axis review (correctness, maintainability, testing, security, operability). Use before /ship.",
-          "id": "review",
-          "name": "review"
-        },
-        {
-          "description": "OpenShift safe deployment - validates upgrade strategy, creates PR, verifies CI, and ships with rollback plan. Use after /review passes. Final step in workflow.",
-          "id": "ship",
-          "name": "ship"
         }
       ],
       "version": "3.0.0"

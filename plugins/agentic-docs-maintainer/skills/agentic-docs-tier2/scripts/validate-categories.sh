@@ -95,19 +95,29 @@ echo ""
 echo "📋 [2/5] Checking entry point..."
 echo ""
 
-if [ -f "$AGENTIC_DIR/AGENTS.md" ]; then
-    lines=$(wc -l < "$AGENTIC_DIR/AGENTS.md")
+# Check for AGENTS.md in root directory first (Tier 2 standard location)
+if [ -f "$REPO_PATH/AGENTS.md" ]; then
+    lines=$(wc -l < "$REPO_PATH/AGENTS.md")
     echo "  ✅ AGENTS.md exists ($lines lines)"
 
     if [ "$lines" -lt 40 ]; then
-        record_warning "AGENTS.md is short ($lines lines, recommended: 80-150)"
-        echo "  ⚠️  AGENTS.md: $lines lines (recommended: 80-150)"
-    elif [ "$lines" -gt 120 ]; then
-        record_warning "AGENTS.md is long ($lines lines, recommended: 80-150, keep lean)"
-        echo "  ⚠️  AGENTS.md: $lines lines (recommended: 80-150, keep lean)"
+        record_warning "AGENTS.md is short ($lines lines, recommended: 80-100 for Tier 2)"
+        echo "  ⚠️  AGENTS.md: $lines lines (recommended: 80-100 for Tier 2)"
+    elif [ "$lines" -gt 100 ]; then
+        record_warning "AGENTS.md exceeds Tier 2 limit ($lines lines, max: 100 for Tier 2)"
+        echo "  ⚠️  AGENTS.md: $lines lines (max: 100 for Tier 2, keep lean)"
     fi
-elif [ -f "$AGENTIC_DIR/${COMPONENT_NAME}_AGENTS.md" ]; then
+# Fallback: check in agentic/ directory (alternate location)
+elif [ -f "$AGENTIC_DIR/AGENTS.md" ]; then
+    lines=$(wc -l < "$AGENTIC_DIR/AGENTS.md")
+    echo "  ✅ AGENTS.md exists in agentic/ ($lines lines)"
+    record_warning "AGENTS.md found in agentic/ - consider moving to root for better visibility"
+# Fallback: component-specific naming
+elif [ -f "$REPO_PATH/${COMPONENT_NAME}_AGENTS.md" ]; then
     echo "  ✅ ${COMPONENT_NAME}_AGENTS.md exists"
+elif [ -f "$AGENTIC_DIR/${COMPONENT_NAME}_AGENTS.md" ]; then
+    echo "  ✅ ${COMPONENT_NAME}_AGENTS.md exists in agentic/"
+    record_warning "${COMPONENT_NAME}_AGENTS.md found in agentic/ - consider moving to root"
 else
     record_issue "Missing entry point: AGENTS.md or ${COMPONENT_NAME}_AGENTS.md"
     echo "  ❌ Missing: AGENTS.md"

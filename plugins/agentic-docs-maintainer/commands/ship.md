@@ -1,5 +1,5 @@
 ---
-description: Safe deployment with upgrade validation, PR creation, and rollback plan
+description: OpenShift safe deployment - validates upgrade strategy, creates PR, verifies CI, and ships with rollback plan
 ---
 
 ## Name
@@ -7,84 +7,54 @@ agentic-docs-maintainer:ship
 
 ## Synopsis
 ```
-/agentic-docs-maintainer:ship [--dry-run] [--skip-upgrade-test]
+/agentic-docs-maintainer:ship
 ```
 
 ## Description
-Safely deploy feature with upgrade strategy validation, PR creation, CI verification, and rollback plan. Final step in the OpenShift development workflow.
+Safely deploy feature following OpenShift shipping practices. Validates readiness, creates PR with context, and provides rollback plan. Use after `/review` passes.
 
-**Key Innovation**: Uses `/fetch` to retrieve upgrade strategies and shipping checklists for safe deployment.
-
-## Arguments
-
-- `--dry-run`: Validate readiness without creating PR
-- `--skip-upgrade-test`: Skip upgrade test (not recommended)
+**Approach**: Read shipping guidance, check readiness, create PR, monitor CI.
 
 ## When to Use
 
+✅ **Use for:**
 - After `/review` passes
-- Ready to create PR and ship
+- Ready to create PR
 - Final step before deployment
-- Need upgrade validation and rollback plan
 
-## Six-Phase Shipping Workflow
+❌ **Don't use for:**
+- Tests not passing
+- Review not approved
+- Work-in-progress code
 
-```
-1. Pre-Ship Checklist   → Validate 32 criteria
-2. Upgrade Validation   → Test N → N+1 upgrade
-3. Create PR            → Generate PR with summary
-4. Verify CI            → Monitor all CI checks
-5. Rollback Plan        → Document recovery procedures
-6. Ship!                → Merge and deploy
-```
+## How It Works
 
-## Pre-Ship Checklist (32 Criteria)
+### Phase 0: Read Shipping Patterns
 
-### API Changes (5 checks)
-- openshift/api PR merged
-- Vendored into component
-- API review complete
-- CRD manifests generated
-- No breaking changes
+Reads upgrade strategies and shipping guidance:
+- `../enhancements/agentic/platform/operator-patterns/upgrade-strategies.md`
+- Component shipping practices (if applicable)
 
-### Implementation (5 checks)
-- All tasks complete
-- Operator patterns followed
-- RBAC minimal
-- Status conditions implemented
-- Validation present
+### Phase 1: Pre-Ship Validation
 
-### Testing (6 checks)
-- Unit tests ≥60%
-- Integration tests ~30%
-- E2E tests ~10%
-- Upgrade test passes
-- CI passes
-- No flaky tests
+Checks readiness:
+- **Code**: Tests pass, review approved, no uncommitted changes
+- **API Changes**: openshift/api PR merged (if applicable)
+- **Documentation**: Enhancement/docs updated (if needed)
+- **Upgrade**: Supports N→N+1 upgrade (if applicable)
 
-### Security (5 checks)
-- STRIDE model applied
-- Input validation
-- No secrets in logs
-- RBAC least privilege
-- No CVEs
+### Phase 2: Create Pull Request
 
-### Observability (5 checks)
-- Metrics implemented
-- ServiceMonitor created
-- Must-gather support
-- Alerts defined
-- Logs structured
+Creates PR with:
+- Brief title (<70 chars)
+- Summary (what changed)
+- Test plan (how to verify)
+- Upgrade notes (if applicable)
+- References (spec, plan)
 
-### Documentation (4 checks)
-- Enhancement merged
-- AGENTS.md updated
-- Exec-plan created
-- Architecture docs updated
+### Phase 3: Report Completion
 
-### Upgrade Strategy (2 checks)
-- Upgradeable condition
-- Handles N → N+1
+Reports PR created, provides rollback plan.
 
 ## Example
 
@@ -94,64 +64,78 @@ Safely deploy feature with upgrade strategy validation, PR creation, CI verifica
 
 **Output:**
 ```
-📚 Fetching shipping guidance...
-  ✅ platform/operator-patterns/upgrade-strategies.md
-  ✅ practices/development/shipping-checklist.md
-  ✅ practices/reliability/rollback-procedures.md
+📚 Reading shipping guidance...
+  ✅ upgrade-strategies.md
+  ✅ [component practices - if applicable]
 
-✅ Pre-Ship Checklist: 32/32 criteria met
+📋 Pre-Ship Validation:
 
-🧪 Testing upgrade path...
-  📦 Installing cluster N (4.15.0)
-  ⬆️  Upgrading to N+1 (4.16.0-rc)
-  ✅ Feature deployed successfully
-  ✅ Upgradeable=True
-  ⬆️  Testing skip-level (4.17.0-rc)
-  ✅ Upgrade validation PASS
+✅ Code ready
+  ✅ All tests pass
+  ✅ Review approved
+
+[✅ API changes merged - if applicable]
+
+[✅ Documentation updated - if needed]
+
+[✅ Upgrade strategy validated - if applicable]
 
 📝 Creating PR...
-  ✅ PR created: https://github.com/openshift/myoperator/pull/123
+  ✅ PR created: [URL]
 
-🔍 Monitoring CI checks...
-  ✅ verify (2m 15s)
-  ✅ unit-tests (3m 42s)
-  ✅ integration-tests (8m 18s)
-  ✅ e2e-tests (45m 22s)
-  ✅ upgrade-test (52m 10s)
-  ✅ build (5m 33s)
-
-📋 Rollback plan documented
-
-🎯 Ready to ship!
-  Next: Wait for reviewers to approve PR
-  Then: Merge PR → Feature deploys automatically
+🎯 Next: Monitor CI, address feedback, merge when approved
 ```
 
-## Upgrade Validation
+## Pre-Ship Validation
 
-Tests three scenarios:
-1. **Install N → Upgrade N+1**: Feature appears correctly
-2. **Verify Upgradeable**: Condition reports True
-3. **Skip-level N+1 → N+2**: Feature survives upgrade
+Checks vary by feature type:
 
-## Rollback Options
+**For operator features**, validates:
+- Controller tests pass
+- Status conditions implemented
+- Upgrade strategy supports N→N+1
 
-1. **Revert PR** (pre-merge): Close PR
-2. **Revert commit** (post-merge): Create revert PR
-3. **Feature flag** (if available): Disable via env var
-4. **Cluster rollback**: Downgrade to previous version
+**For CLI features**, validates:
+- Command tests pass
+- Help text present
+- User experience verified
 
-## Success Criteria
+**For library features**, validates:
+- API tests pass
+- Documentation updated
+- Examples work
 
-Ship completes when:
-- ✅ All 32 pre-ship criteria met
-- ✅ Upgrade test passes
-- ✅ PR created and approved
-- ✅ All CI checks green
-- ✅ Rollback plan ready
-- ✅ PR merged
-- ✅ Feature deployed
-- ✅ Operator Available=True
+**Adapts validation to feature type - doesn't force operator checks everywhere.**
+
+## Rollback Plan
+
+Options if issues arise:
+- **Pre-merge**: Close PR
+- **Post-merge**: Create revert PR
+- **Feature flag** (if available): Disable via config
+
+## Integration with Other Skills
+
+**Full workflow:**
+```bash
+# After /review passes
+
+/ship
+→ Validate readiness
+→ Create PR
+→ Monitor CI
+→ Merge when approved
+```
+
+## Implementation
+
+Execution handled by skill at: `skills/ship/SKILL.md`
+
+**Key phases:**
+1. Read shipping patterns (inline)
+2. Validate pre-ship checklist
+3. Create PR with context
+4. Report completion and rollback plan
 
 ## See Also
 
@@ -160,6 +144,5 @@ Ship completes when:
 
 ---
 
-**Pattern**: Safe deployment with upgrade validation  
-**Version**: 1.0  
-🎉 **Final step in the OpenShift development workflow!**
+**Pattern**: OpenShift safe deployment  
+**Version**: 2.0

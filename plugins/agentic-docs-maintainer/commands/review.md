@@ -1,5 +1,5 @@
 ---
-description: Five-axis code review against OpenShift operator patterns and practices
+description: Five-axis code review against OpenShift patterns and practices
 ---
 
 ## Name
@@ -7,37 +7,66 @@ agentic-docs-maintainer:review
 
 ## Synopsis
 ```
-/agentic-docs-maintainer:review [--component <name>] [--fix-auto]
+/agentic-docs-maintainer:review [--component <name>]
 ```
 
 ## Description
-Reviews implementation across five axes: correctness, maintainability, testing, security, and operability. Checks compliance with operator patterns, engineering practices, and component standards.
+Reviews implementation across five axes: correctness, maintainability, testing, security, and operability. Checks compliance with OpenShift patterns and practices.
 
-**Key Innovation**: Uses `/fetch` to retrieve review criteria from agentic documentation for automated compliance checking.
+**Approach**: Read review criteria, check code, report issues.
 
 ## Arguments
 
-- `--component <name>`: Component name for component-specific checks
-- `--fix-auto`: Automatically fix linter issues where possible
+- `--component <name>`: Component name for component-specific checks (optional)
 
 ## When to Use
 
+✅ **Use for:**
 - After `/test` passes
-- Before creating PR
+- Before creating PR (`/ship`)
 - Self-review against OpenShift standards
-- Automated compliance checking before `/ship`
+
+❌ **Don't use for:**
+- Tests not yet passing
+- Work-in-progress code
 
 ## Five-Axis Review
 
-| Axis | Focus | Score |
-|------|-------|-------|
-| **1. Correctness** | Does it work? | /20 |
-| **2. Maintainability** | Can it be understood? | /20 |
-| **3. Testing** | Is it proven? | /20 |
-| **4. Security** | Is it safe? | /20 |
-| **5. Operability** | Will it run well? | /20 |
+Reviews code across five dimensions:
 
-**Total**: /100
+### Axis 1: Correctness
+**Does it work?**
+- Implements feature as specified
+- Handles errors appropriately
+- Edge cases considered
+
+### Axis 2: Maintainability
+**Can others work with it?**
+- Code is readable
+- Follows existing patterns
+- Appropriate comments
+- No unnecessary duplication
+
+### Axis 3: Testing
+**Is it tested?**
+- Unit tests for business logic
+- Integration tests for component interactions
+- E2E tests for critical paths
+- Tests verify behavior (not just coverage)
+
+### Axis 4: Security
+**Is it safe?**
+- No secrets in code/logs
+- RBAC follows least privilege
+- Input validation present
+- No obvious vulnerabilities
+
+### Axis 5: Operability
+**Can it run in production?**
+- Metrics for monitoring
+- Logs for debugging
+- Status reporting (if operator)
+- must-gather support (if operator)
 
 ## Example
 
@@ -47,72 +76,129 @@ Reviews implementation across five axes: correctness, maintainability, testing, 
 
 **Output:**
 ```
-📚 Fetching review criteria...
-  ✅ platform/operator-patterns/ (8 patterns)
-  ✅ practices/development/code-review.md
-  ✅ practices/security/threat-modeling.md
-  ✅ machine-config-operator/agentic/patterns/
+📚 Reading review criteria...
+  ✅ operator-patterns
+  ✅ practices/security
+  ✅ machine-config-operator/agentic
 
 🔍 Reviewing implementation...
 
-## Axis 1: Correctness ✅ 20/20
-  ✅ Controller runtime pattern followed
-  ✅ Status conditions correct
-  ✅ RBAC minimal and appropriate
+Correctness: ✅
+  ✅ Feature works as specified
+  ✅ Error handling present
 
-## Axis 2: Maintainability ✅ 18/20
-  ✅ Code style consistent
-  ⚠️  Function `reconcileComplex()` is 75 lines (recommend <50)
+Maintainability: ✅
+  ✅ Code is readable
+  ✅ Follows existing patterns
 
-## Axis 3: Testing ✅ 19/20
-  ✅ Testing pyramid (60/29/11)
-  ⚠️  Integration tests 1% below target
+Testing: ⚠️
+  ✅ Unit tests (60%)
+  ⚠️  Integration tests low (23% vs 30% target)
+  ✅ E2E tests (10%)
 
-## Axis 4: Security ✅ 20/20
-  ✅ STRIDE analysis complete
-  ✅ No secrets in logs
+Security: ✅
+  ✅ No vulnerabilities found
+  ✅ RBAC least-privilege
 
-## Axis 5: Operability 🟡 17/20
-  ✅ Metrics + must-gather present
-  ⚠️  Resource limits not set
+Operability: ✅
+  ✅ Metrics present
+  ✅ must-gather support
 
-📊 Overall Score: 94/100 🟢 PASS
+────────────────────────────────────────────────────────────────
 
-## Action Items:
-  Must Fix (Blocking): None
-  Should Fix: Set resource limits, add 1 integration test
-  Nice to Have: Refactor large function
+Issues Found:
 
-✅ APPROVED for merge (after "Should Fix" items)
+Must Fix: 0
+Should Fix: 1
+  - Add 5 integration tests to reach 30% target
+
+Nice to Have: 0
+
+Status: ✅ APPROVED (with recommendations)
+
+════════════════════════════════════════════════════════════════
+  REVIEW GATE
+════════════════════════════════════════════════════════════════
+
+Respond:
+  ✅ "approve" / "ship" → Continue to /ship
+  ✏️  "fix: add tests" → Address issues
 ```
 
-## Compliance Checklists
+## Issue Categories
 
-### Operator Patterns (8 checks)
-- Controller-runtime reconciliation
-- Status conditions
-- Leader election
-- Finalizers
-- Webhooks
-- RBAC patterns
-- Upgrade safety
-- Must-gather
+**Must Fix** (blocking - cannot ship):
+- Functional bugs
+- Security vulnerabilities
+- Missing critical tests
+- Major pattern violations
 
-### Engineering Practices (7 checks)
-- Testing pyramid
-- STRIDE threat model
-- SLO defined
-- CI integration
-- ADRs documented
-- Git workflow
-- Resource limits
+**Should Fix** (recommended - ship with plan to address):
+- Code clarity issues
+- Missing non-critical tests
+- Minor pattern deviations
+- Missing metrics
+
+**Nice to Have** (optional - can ship as-is):
+- Code style improvements
+- Additional documentation
+- Extra logging
+
+## Pattern Compliance
+
+Reviews based on feature type:
+
+**For operator features**, checks:
+- controller-runtime patterns
+- Status condition reporting
+- Upgrade support
+- RBAC design
+
+**For CLI features**, checks:
+- Command structure (cobra)
+- Help text present
+- Error handling
+- User experience
+
+**For library features**, checks:
+- Clear interface
+- Documentation
+- Examples
+- API design
+
+**Adapts review to feature type - doesn't force operator patterns everywhere.**
+
+## Integration with Other Skills
+
+**Full workflow:**
+```bash
+# After /test passes
+
+/review
+→ Review code against patterns
+→ Fix issues if needed
+→ Approve
+
+/ship
+→ Create PR
+```
+
+## Implementation
+
+Execution handled by skill at: `skills/review/SKILL.md`
+
+**Key phases:**
+1. Read review criteria (patterns, practices, component standards)
+2. Review code (five axes + pattern compliance)
+3. Report issues (must/should/nice categories)
+4. Approval gate
 
 ## See Also
 
-- `/agentic-docs-maintainer:test` - Run tests (previous step)
-- `/agentic-docs-maintainer:ship` - Deploy safely (next step)
+- `/agentic-docs-maintainer:test` - Verify testing (previous step)
+- `/agentic-docs-maintainer:ship` - Create PR (next step)
 
 ---
 
-**Pattern**: Five-axis code review with automated compliance  
-**Version**: 1.0
+**Pattern**: OpenShift code review  
+**Version**: 2.0

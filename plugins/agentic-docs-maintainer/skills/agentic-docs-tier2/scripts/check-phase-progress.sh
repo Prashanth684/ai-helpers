@@ -59,10 +59,10 @@ check_critical() {
     fi
 
     # Check Phase 2.5 (Domain Discovery)
-    phase_2_5_status=$(grep -A2 "phase_2.5_domain_discovery" "$PROGRESS_FILE" | grep "status" | cut -d'"' -f4)
+    phase_2_5_status=$(grep "phase_2.5_domain_discovery" "$PROGRESS_FILE" | sed 's/.*"status": "\([^"]*\)".*/\1/')
 
     # Check Phase 5.2 (ADR Extraction)
-    phase_5_2_status=$(grep -A2 "phase_5.2_adr_extraction" "$PROGRESS_FILE" | grep "status" | cut -d'"' -f4)
+    phase_5_2_status=$(grep "phase_5.2_adr_extraction" "$PROGRESS_FILE" | sed 's/.*"status": "\([^"]*\)".*/\1/')
 
     echo "🔍 Critical Phase Status Check"
     echo "==============================="
@@ -78,7 +78,7 @@ check_critical() {
         CRITICAL_INCOMPLETE=1
     else
         echo -e "${GREEN}✅ Phase 2.5: Domain Discovery - COMPLETE${NC}"
-        completed_at=$(grep -A3 "phase_2.5_domain_discovery" "$PROGRESS_FILE" | grep "completed_at" | cut -d'"' -f4)
+        completed_at=$(grep "phase_2.5_domain_discovery" "$PROGRESS_FILE" | sed 's/.*"completed_at": "\([^"]*\)".*/\1/')
         echo "   Completed at: $completed_at"
         echo ""
     fi
@@ -91,7 +91,7 @@ check_critical() {
         CRITICAL_INCOMPLETE=1
     else
         echo -e "${GREEN}✅ Phase 5.2: ADR Extraction - COMPLETE${NC}"
-        completed_at=$(grep -A3 "phase_5.2_adr_extraction" "$PROGRESS_FILE" | grep "completed_at" | cut -d'"' -f4)
+        completed_at=$(grep "phase_5.2_adr_extraction" "$PROGRESS_FILE" | sed 's/.*"completed_at": "\([^"]*\)".*/\1/')
         echo "   Completed at: $completed_at"
         echo ""
     fi
