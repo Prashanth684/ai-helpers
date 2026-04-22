@@ -43,7 +43,8 @@ Creates **lean** Tier 2 agentic documentation for OpenShift component repositori
 **Lean structure (~2,500 lines vs 6,000 for single-tier):**
 ```
 component-repo/
-├── AGENTS.md                      [~60-100 lines, links to Tier 1]
+├── AGENTS.md                      [~80-100 lines at root]
+│                                  [Compressed index + Tier 1 links + retrieval-first]
 ├── ARCHITECTURE.md
 └── agentic/
     ├── domain/                    [Component concepts ONLY]
@@ -75,7 +76,10 @@ cd machine-config-operator
 /agentic-docs-maintainer:tier2-component
 
 # Creates:
-# - AGENTS.md (60-100 lines)
+# - AGENTS.md at root (80-100 lines)
+#   ✓ Compressed index of component agentic/ docs
+#   ✓ Links to Tier 1 ecosystem hub
+#   ✓ Retrieval-first instruction
 # - agentic/domain/, architecture/, decisions/, exec-plans/
 # - agentic/references/ecosystem.md (links to Tier 1)
 # - MCO_DEVELOPMENT.md, MCO_TESTING.md (lean)
@@ -91,8 +95,9 @@ cd machine-config-operator
 # 1. Identifies generic content (testing pyramid, operator patterns)
 # 2. Removes generic content (2,400 lines)
 # 3. Keeps component-specific (3,600 lines)
-# 4. Creates ecosystem.md with Tier 1 links
-# 5. Reduces AGENTS.md from 143 → 60 lines
+# 4. Creates AGENTS.md at root with compressed index + Tier 1 links
+# 5. Creates ecosystem.md with Tier 1 links
+# 6. Reduces from 143 → 80 lines (compressed format)
 ```
 
 ### Example 3: Verify Tier 2 compliance
@@ -102,7 +107,10 @@ cd machine-config-operator
 /agentic-docs-maintainer:tier2-component --verify
 
 # Checks:
-# ✅ AGENTS.md ≤100 lines
+# ✅ AGENTS.md at root (≤100 lines)
+# ✅ AGENTS.md has compressed index of component docs
+# ✅ AGENTS.md has Tier 1 ecosystem hub links
+# ✅ Retrieval-first instruction present
 # ✅ No generic duplication
 # ✅ ecosystem.md exists
 # ✅ All Tier 1 links valid
@@ -111,7 +119,10 @@ cd machine-config-operator
 ## Validation Criteria
 
 **Tier 2 docs pass when:**
-- ✅ AGENTS.md ≤ 100 lines
+- ✅ AGENTS.md at root (≤ 100 lines)
+- ✅ AGENTS.md contains compressed index of component agentic/ docs
+- ✅ AGENTS.md has "IMPORTANT: Prefer retrieval-led reasoning" instruction
+- ✅ AGENTS.md includes Tier 1 ecosystem hub links section
 - ✅ Zero generic content duplication
 - ✅ ecosystem.md exists with Tier 1 links
 - ✅ Component-specific content only
@@ -127,10 +138,11 @@ cd machine-config-operator
 ## Metrics
 
 **Expected reduction from single-tier:**
-- AGENTS.md: -58% (143 → 60 lines)
+- AGENTS.md: -44% (143 → 80 lines, compressed format)
 - Total docs: -58% (6,000 → 2,500 lines)
 - Generic duplication: -100% (2,400 → 0 lines)
 - Context budget: -54% for component tasks
+- Compressed index: ~400 chars for component docs
 
 **Ecosystem benefits:**
 - Pattern updates: 1 Tier 1 PR vs 60+ component PRs
@@ -156,10 +168,16 @@ cd machine-config-operator
 ```markdown
 # MCO_TESTING.md (90 lines, 100% MCO-specific)
 
-> Testing practices: [Tier 1](link)
+> Testing practices: See Tier 1 ecosystem hub
 
 ## MCO Tests
 [37 lines MCO-specific]
+```
+
+And in root AGENTS.md:
+```markdown
+## Tier 1 Ecosystem Hub
+For platform-wide patterns, see: https://github.com/openshift/enhancements/tree/master/agentic
 ```
 
 ### ❌ DON'T create cross-repo ADRs in component
@@ -211,7 +229,11 @@ What the script does:
 **Step 2: LLM - Create lean documentation**
 
 LLM reads SKILL.md and creates:
-- AGENTS.md (~60-100 lines, includes exec-plans/ in structure)
+- Root AGENTS.md (~80-100 lines) with:
+  - Compressed index of component agentic/ docs
+  - Retrieval-first instruction
+  - Tier 1 ecosystem hub links section
+  - Quick component navigation
 - Component-specific domain concepts
 - Component architecture docs
 - Component ADRs
@@ -222,15 +244,19 @@ Key principles:
 - Component-specific content ONLY
 - Links to Tier 1 for generic patterns
 - AGENTS.md ≤100 lines
+- Compressed index format (pipe-delimited)
 - Guidance on using exec-plans/ for feature planning
 
 **Step 3: SCRIPT - Validate**
 ```bash
-bash "$SKILL_DIR/scripts/validate.sh" "$REPO_PATH/agentic"
+bash "$SKILL_DIR/scripts/validate.sh" "$REPO_PATH"
 ```
 
 What the script does:
-- Checks AGENTS.md ≤100 lines
+- Checks AGENTS.md at root (≤100 lines)
+- Verifies compressed index present
+- Checks Tier 1 links section exists
+- Verifies retrieval-first instruction
 - Verifies no generic duplication
 - Confirms ecosystem.md exists
 
@@ -334,20 +360,27 @@ Component: machine-config-operator
 Repository: /path/to/repo
 
 Structure Created:
-  - AGENTS.md: 78 lines (target: ≤100) ✅
+  - AGENTS.md (root): 87 lines (target: ≤100) ✅
+    ✓ Compressed index of 15 component docs
+    ✓ Retrieval-first instruction
+    ✓ Tier 1 ecosystem hub links
+    ✓ Component quick navigation
   - Domain concepts: 4 files
   - Architecture docs: 3 files
   - Component ADRs: 3 files
   - Ecosystem references: ecosystem.md ✅
 
-Tier 1 Links:
+Tier 1 Links in AGENTS.md:
+  - Ecosystem hub: github.com/openshift/enhancements/agentic ✅
   - Operator patterns: 5 links ✅
   - Testing practices: 3 links ✅
   - Security practices: 2 links ✅
   - Cross-repo ADRs: 3 links ✅
 
 Validation:
-  ✅ AGENTS.md ≤100 lines
+  ✅ AGENTS.md at root with compressed index
+  ✅ Retrieval-first instruction present
+  ✅ Tier 1 ecosystem links included
   ✅ No generic duplication detected
   ✅ ecosystem.md created with Tier 1 links
   ✅ Component-specific content only

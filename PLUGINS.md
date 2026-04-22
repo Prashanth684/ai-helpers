@@ -47,10 +47,19 @@ See [plugins/agendas/README.md](plugins/agendas/README.md) for detailed document
 
 ### Agentic Docs Maintainer Plugin
 
-Autonomous maintenance and knowledge extraction for AI-friendly documentation (single-tier and two-tier)
+OpenShift development lifecycle - from spec to ship. Full workflow: spec → plan → build → test → review → ship. Autonomous maintenance and knowledge extraction for AI-friendly documentation.
 
-**Commands:**
+**Lifecycle Skills:**
+- **`/agentic-docs-maintainer:spec`** - Create OpenShift feature specifications following enhancement template and agentic patterns
+- **`/agentic-docs-maintainer:plan`** - Break down approved spec into ordered, implementable tasks following OpenShift practices
+- **`/agentic-docs-maintainer:build`** - Incrementally implement tasks from plan following OpenShift operator patterns with TDD
+- **`/agentic-docs-maintainer:test`** - Verify comprehensive testing following OpenShift testing pyramid (60/30/10)
+- **`/agentic-docs-maintainer:review`** - Five-axis code review against OpenShift operator patterns and practices
+- **`/agentic-docs-maintainer:ship`** - Safe deployment with upgrade validation, PR creation, and rollback plan
+
+**Documentation Maintenance:**
 - **`/agentic-docs-maintainer:extract`** - Extract knowledge from enhancements and create documentation automatically
+- **`/agentic-docs-maintainer:fetch`** - Intelligent retrieval agent - gather context from OpenShift agentic docs for questions, features, and bugs
 - **`/agentic-docs-maintainer:fix`** - Automatically fix compliance issues in agentic documentation
 - **`/agentic-docs-maintainer:tier1-ecosystem`** - Create Tier 1 agentic documentation (ecosystem hub) in openshift/enhancements
 - **`/agentic-docs-maintainer:tier2-component`** - Create lean Tier 2 agentic documentation for OpenShift component repositories

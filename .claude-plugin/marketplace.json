@@ -80,7 +80,7 @@
       "name": "agentic-docs-maintainer",
       "source": "./plugins/agentic-docs-maintainer",
       "description": "Autonomous maintenance and knowledge extraction for AI-friendly documentation",
-      "version": "2.3.0"
+      "version": "2.5.0"
     },
     {
       "name": "openshift",

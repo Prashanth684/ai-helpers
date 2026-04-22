@@ -992,9 +992,21 @@
         },
         {
           "argument_hint": "",
+          "description": "Intelligent retrieval agent - gather context from OpenShift agentic docs for questions, features, and bugs",
+          "name": "fetch",
+          "synopsis": "/agentic-docs-maintainer:fetch <query> [--component <name>] [--output-spec] [--tier1-only] [--tier2 <org/repo>] [--local | --remote]"
+        },
+        {
+          "argument_hint": "",
           "description": "Automatically fix compliance issues in agentic documentation",
           "name": "fix",
           "synopsis": "/agentic-docs-maintainer [--path <repo-path>]"
+        },
+        {
+          "argument_hint": "",
+          "description": "Create OpenShift feature specifications following enhancement template and agentic patterns",
+          "name": "spec",
+          "synopsis": "/agentic-docs-maintainer:spec [feature-description] [--component <name>]"
         },
         {
           "argument_hint": "",
@@ -1013,9 +1025,39 @@
           "description": "Verify agentic documentation compliance against SPECIFICATION.md",
           "name": "verify",
           "synopsis": "/agentic-docs-maintainer:verify [--path <repo-path>]"
+        },
+        {
+          "argument_hint": "",
+          "description": "Break down approved spec into ordered, implementable tasks following OpenShift practices",
+          "name": "plan",
+          "synopsis": "/agentic-docs-maintainer:plan [spec-file] [--component <name>]"
+        },
+        {
+          "argument_hint": "",
+          "description": "Incrementally implement tasks from plan following OpenShift operator patterns with TDD",
+          "name": "build",
+          "synopsis": "/agentic-docs-maintainer:build <task-number> [--plan-file <path>]"
+        },
+        {
+          "argument_hint": "",
+          "description": "Verify comprehensive testing following OpenShift testing pyramid (60/30/10)",
+          "name": "test",
+          "synopsis": "/agentic-docs-maintainer:test [--coverage-report] [--fix-missing]"
+        },
+        {
+          "argument_hint": "",
+          "description": "Five-axis code review against OpenShift operator patterns and practices",
+          "name": "review",
+          "synopsis": "/agentic-docs-maintainer:review [--component <name>] [--fix-auto]"
+        },
+        {
+          "argument_hint": "",
+          "description": "Safe deployment with upgrade validation, PR creation, and rollback plan",
+          "name": "ship",
+          "synopsis": "/agentic-docs-maintainer:ship [--dry-run] [--skip-upgrade-test]"
         }
       ],
-      "description": "Autonomous maintenance and knowledge extraction for AI-friendly documentation",
+      "description": "OpenShift development lifecycle - from spec to ship. Full workflow: spec \u2192 plan \u2192 build \u2192 test \u2192 review \u2192 ship. Autonomous maintenance and knowledge extraction for AI-friendly documentation.",
       "has_readme": true,
       "hooks": [],
       "name": "agentic-docs-maintainer",
@@ -1034,9 +1076,44 @@
           "description": "Create and maintain lean Tier 2 agentic documentation for component repos (references Tier 1)",
           "id": "agentic-docs-tier2",
           "name": "agentic-docs-tier2"
+        },
+        {
+          "description": "Intelligent retrieval agent - navigates agentic docs to find context for OpenShift questions, features, and bugs",
+          "id": "fetch",
+          "name": "fetch"
+        },
+        {
+          "description": "OpenShift feature specification - creates specs following enhancement template and agentic patterns. Use when starting a new operator feature, adding CRDs/APIs, or proposing enhancements.",
+          "id": "spec",
+          "name": "spec"
+        },
+        {
+          "description": "OpenShift implementation planning - breaks down approved spec into ordered, implementable tasks following OpenShift development practices. Use after /spec is approved.",
+          "id": "plan",
+          "name": "plan"
+        },
+        {
+          "description": "OpenShift incremental implementation - implements tasks from plan following operator patterns, with tests and verification at each step. Use after /plan is approved.",
+          "id": "build",
+          "name": "build"
+        },
+        {
+          "description": "OpenShift comprehensive testing - implements and verifies testing pyramid (60% unit, 30% integration, 10% E2E) following openshift-tests framework. Use after /build tasks complete.",
+          "id": "test",
+          "name": "test"
+        },
+        {
+          "description": "OpenShift code review - checks implementation against operator patterns, practices, and component standards. Five-axis review (correctness, maintainability, testing, security, operability). Use before /ship.",
+          "id": "review",
+          "name": "review"
+        },
+        {
+          "description": "OpenShift safe deployment - validates upgrade strategy, creates PR, verifies CI, and ships with rollback plan. Use after /review passes. Final step in workflow.",
+          "id": "ship",
+          "name": "ship"
         }
       ],
-      "version": "2.3.0"
+      "version": "3.0.0"
     },
     {
       "commands": [

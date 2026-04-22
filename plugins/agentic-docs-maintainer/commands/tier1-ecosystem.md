@@ -39,8 +39,10 @@ Creates **Tier 1 agentic documentation** in the `openshift/enhancements` reposit
 enhancements/
 ├── enhancements/            [EXISTING - keep]
 ├── dev-guide/               [EXISTING - keep]
+├── AGENTS.md                [NEW - ~130-150 lines, compressed index at root]
 └── agentic/                 [NEW]
-    ├── OPENSHIFT_AGENTS.md  [~150-170 lines entry point]
+    ├── KNOWLEDGE_GRAPH.md   [Visual navigation map]
+    ├── DESIGN_PHILOSOPHY.md [Core principles]
     ├── platform/
     │   ├── operator-patterns/      [Standard patterns all operators use]
     │   └── openshift-specifics/    [Platform concepts]
@@ -107,8 +109,10 @@ cd /path/to/openshift/enhancements
 /agentic-docs-maintainer:tier1-ecosystem
 
 # Creates:
+# - AGENTS.md at root (130-150 lines, compressed index + retrieval-first instruction)
 # - agentic/ directory with full structure
-# - OPENSHIFT_AGENTS.md (150-170 lines)
+# - KNOWLEDGE_GRAPH.md (visual navigation map)
+# - DESIGN_PHILOSOPHY.md (core principles)
 # - Platform patterns (9 files)
 # - Engineering practices (13 files)
 # - Domain concepts (9 files)
@@ -123,7 +127,9 @@ cd /path/to/openshift/enhancements
 /agentic-docs-maintainer:tier1-ecosystem --verify
 
 # Checks:
-# ✅ OPENSHIFT_AGENTS.md ~150-170 lines
+# ✅ AGENTS.md exists at root (~130-150 lines)
+# ✅ Compressed index includes all agentic/ docs
+# ✅ Retrieval-first instruction present
 # ✅ All required directories exist
 # ✅ No component-specific content
 # ✅ All links valid
@@ -132,7 +138,9 @@ cd /path/to/openshift/enhancements
 ## Validation Criteria
 
 **Tier 1 docs pass when:**
-- ✅ OPENSHIFT_AGENTS.md ~150-170 lines
+- ✅ AGENTS.md exists at root (~130-150 lines)
+- ✅ AGENTS.md contains compressed index of all agentic/ docs
+- ✅ AGENTS.md has "IMPORTANT: Prefer retrieval-led reasoning" instruction
 - ✅ All platform patterns documented (≥5 operator patterns)
 - ✅ All practices documented (testing, security, reliability, development)
 - ✅ All cross-repo ADRs present (≥3 ADRs)
@@ -143,7 +151,9 @@ cd /path/to/openshift/enhancements
 
 **Expected Tier 1 size:**
 - Total lines: ~4,000 lines
-- OPENSHIFT_AGENTS.md: ~150-170 lines
+- AGENTS.md (root): ~130-150 lines
+- KNOWLEDGE_GRAPH.md: ~300 lines
+- DESIGN_PHILOSOPHY.md: ~500 lines
 - Platform patterns: ~1,200 lines
 - Engineering practices: ~1,500 lines
 - Domain concepts: ~800 lines
@@ -172,25 +182,26 @@ MachineConfig is how MCO manages node configuration...
 # machine-config-operator/agentic/domain/machineconfig.md
 ```
 
-### ❌ DON'T make OPENSHIFT_AGENTS.md too long
+### ❌ DON'T make AGENTS.md too long
 
 **Wrong:**
 ```markdown
-# OPENSHIFT_AGENTS.md (200 lines)
+# AGENTS.md (200+ lines)
 
 ## Detailed Operator Pattern Explanations
-[100 lines of detail]
+[100 lines of detail about each pattern]
 ```
 
 **Right:**
 ```markdown
-# OPENSHIFT_AGENTS.md (120 lines)
+# AGENTS.md (~140 lines)
 
-## Operator Patterns
-| Pattern | Link |
-|---------|------|
-| Status Conditions | [status-conditions.md](./platform/operator-patterns/status-conditions.md) |
+## Compressed Documentation Index
+[OpenShift Agentic Docs]|root:./agentic|58 files
+|platform/operator-patterns:{controller-runtime.md,status-conditions.md,...}
 ```
+
+Keep it compressed with quick navigation only.
 
 ### ❌ DON'T duplicate dev-guide content
 
@@ -242,15 +253,16 @@ What the script does:
 **Step 3: LLM - Create all documentation**
 
 LLM reads SKILL.md and creates documentation using templates:
-- **Phase 2**: OPENSHIFT_AGENTS.md (~150-170 lines)
-- **Phase 3**: Platform patterns (operator patterns, OpenShift specifics)
-- **Phase 4**: Engineering practices (testing, security, reliability, development)
-- **Phase 5**: Domain concepts (critical Kubernetes and OpenShift APIs)
-- **Phase 6**: Cross-repo ADRs (architectural decisions affecting multiple repos)
-- **Phase 7**: Reference materials (repo index, glossary, enhancement index, API reference)
-- **Phase 7.5**: Index files for major sections
-- **Phase 7.6**: Workflow documentation (enhancement process, implementation)
-- **Phase 7.7**: MachineConfig platform API documentation
+- **Phase 1**: Root AGENTS.md (~130-150 lines with compressed index + retrieval-first instruction)
+- **Phase 2**: KNOWLEDGE_GRAPH.md (visual navigation map)
+- **Phase 3**: DESIGN_PHILOSOPHY.md (core principles)
+- **Phase 4**: Platform patterns (operator patterns, OpenShift specifics)
+- **Phase 5**: Engineering practices (testing, security, reliability, development)
+- **Phase 6**: Domain concepts (critical Kubernetes and OpenShift APIs)
+- **Phase 7**: Cross-repo ADRs (architectural decisions affecting multiple repos)
+- **Phase 8**: Reference materials (repo index, glossary, enhancement index, API reference)
+- **Phase 9**: Index files for major sections
+- **Phase 10**: Workflow documentation (enhancement process, implementation)
 
 The LLM identifies what's critical based on OpenShift ecosystem needs.
 
@@ -269,10 +281,15 @@ What the script does:
 ✅ Tier 1 Agentic Documentation Created
 
 Repository: openshift/enhancements
-Location: /agentic
+Location: Root + /agentic
 
 Structure Created:
-  - OPENSHIFT_AGENTS.md: 167 lines (target: ~150-170) ✅
+  - AGENTS.md (root): 142 lines (target: ~130-150) ✅
+    ✓ Compressed index of 58 docs
+    ✓ Retrieval-first instruction
+    ✓ Task maps and quick navigation
+  - KNOWLEDGE_GRAPH.md: Visual navigation map
+  - DESIGN_PHILOSOPHY.md: Core principles
   - Platform patterns (operator patterns, OpenShift specifics)
   - Engineering practices (testing, security, reliability, development)
   - Domain concepts (Kubernetes and OpenShift platform APIs)
@@ -282,7 +299,8 @@ Structure Created:
   - Index files for major sections
 
 Validation:
-  ✅ OPENSHIFT_AGENTS.md ~150-170 lines
+  ✅ AGENTS.md at root with compressed index
+  ✅ Retrieval-first instruction present
   ✅ All required directories present
   ✅ No component-specific content detected
   ✅ Critical platform patterns and practices documented
